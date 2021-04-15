@@ -18,7 +18,7 @@ struct Particle
 
 struct Simplex_4
 {
-	uint32_t p_idx[4];
+	int p_idx[4];
 	glm::mat3 t0inv;
 	glm::mat3 strain;
 	glm::vec3 n0, n1, n2;
@@ -41,7 +41,7 @@ private:
 	std::vector<glm::vec3> vertices;
 	std::vector<glm::vec3> StartPositions;
 
-	int drawmode = 0; // 0 - points, 1 - lines, 2 - quads
+	int drawmode = 1; // 0 - points, 1 - lines, 2 - quads
 
 public:
 
@@ -52,6 +52,8 @@ public:
 	void update();
 
 	void update_buffer();
+
+	void add_cube(glm::vec3 coords, float edge);
 
 };
 
