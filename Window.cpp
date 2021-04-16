@@ -144,7 +144,9 @@ void Window::resizeCallback(GLFWwindow* window, int width, int height)
 void Window::idleCallback()
 {
 	// Perform any necessary updates here 
-	currObj->update();
+	for (int i = 0; i < 10; i++) {
+		currObj->update();
+	}
 }
 
 void Window::displayCallback(GLFWwindow* window)
