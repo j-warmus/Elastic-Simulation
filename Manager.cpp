@@ -161,8 +161,28 @@ void ElasticManager::update()
 		float lame2 = youngs / (2.f * (1.f + poisson));
 		float trace = strain[0][0] + strain[1][1] + strain[2][2];
 
-		glm::mat3 cauchy = 2.f * lame2 * strain + lame1 * trace * glm::mat3(1.f);
+		glm::mat3 cauchy;
+		// damping
+		if (enableDamping == true)
+		{
+			r1 = Particles[p1].velocity;
+			r2 = Particles[p2].velocity;
+			r3 = Particles[p3].velocity;
+			r4 = Particles[p4].velocity;
 
+			e1 = r1 - r4;
+			e2 = r2 - r4;
+			e3 = r3 - r4;
+			glm::mat3 dF = glm::mat3(e1, e2, e3) * e.t0inv;
+			glm::mat3 dFt = glm::transpose(glm::mat3(e1, e2, e3)) * e.t0inv;
+			glm::mat3 v = .5f * (dFt * dF);
+			cauchy = 2.f * lame2 * strain + lame1 * trace * glm::mat3(1.f) + dampingFactor * v;
+
+		}
+		else {
+			cauchy = 2.f * lame2 * strain + lame1 * trace * glm::mat3(1.f);
+
+		}
 		Particles[p1].force += F * cauchy * e.n1;
 		Particles[p2].force += F * cauchy * e.n2;
 		Particles[p3].force += F * cauchy * e.n3;
