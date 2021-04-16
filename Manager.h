@@ -33,15 +33,15 @@ private:
 	GLuint VBO, EBO;
 
 	//fps
-	float timestep = 1.f / 1000.f;
+	float timestep = 1.f / 18000.f;
 	
 	bool enableDamping = true;
-	float dampingFactor = 5.f;
+	float dampingFactor = 1.f;
 	
 	// parameters
-	float density = 150;
+	float density = 1000;
 	float gravity = -9.8f;
-	float youngs = 500000;
+	float youngs = 2500000;
 	float poisson = 0.25;
 	float groundPlane = -3.0f;
 

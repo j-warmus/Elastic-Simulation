@@ -100,19 +100,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Cube.cpp" />
     <ClCompile Include="Manager.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="PointCloud.cpp" />
     <ClCompile Include="shader.cpp" />
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Cube.h" />
     <ClInclude Include="Manager.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="Object.h" />
-    <ClInclude Include="PointCloud.h" />
     <ClInclude Include="shader.h" />
     <ClInclude Include="Window.h" />
   </ItemGroup>
