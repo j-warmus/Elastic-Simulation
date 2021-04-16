@@ -33,23 +33,29 @@ private:
 	GLuint VBO, EBO;
 
 	//fps
-	float timestep = 1.f / 18000.f;
+	float timestep = 1.f / 600.f;
 	
 	bool enableDamping = true;
 	
 	// parameters
-	float density = 1000;
+	float density = 100;
 	float gravity = -9.8f;
-	float youngs = 2500000;
+	float youngs = 250000;
 	float poisson = 0.25;
 	float groundPlane = -3.0f;
 
+	// mesh (w x l x h in # of particles, not meters)
+	glm::vec3 origin = glm::vec3(-3, 5, -8);
+	int height = 6;
+	int width = 6;
+	int depth = 6;
+	
+	float edgelength = 1;
 
 	std::vector<Particle> Particles;
 	std::vector<Simplex_3> Elements;
 	std::vector<glm::vec3> vertices;
-	std::vector<glm::vec3> StartPositions;
-
+	std::vector<glm::vec3> indices;
 	int drawmode = 1; // 0 - points, 1 - lines, 2 - quads
 
 public:
@@ -62,9 +68,13 @@ public:
 
 	void update_buffer();
 
-	void add_cube(glm::vec3 coords, float edge);
+	void genMesh(glm::vec3 startpos);
+
+	void add_cube(glm::vec3 topleft);
 
 	void genTetra(int p1, int p2, int p3, int p4);
+
+	int idx3d(glm::vec3 idx);
 
 	int get_timestep() { return timestep; };
 

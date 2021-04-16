@@ -8,9 +8,46 @@ ElasticManager::ElasticManager()
 
 	color = glm::vec3(1.0f, 1.0f, 1.0f);
 
-	//test cube code
-	add_cube(glm::vec3(-1, -1, -1), 2.f);
+	//float edge = 1.f;
+	//glm::vec3 coords = glm::vec3(1.f, 1.f, 1.f);
 
+	//std::vector<glm::vec3> sverts{
+	//glm::vec3(coords.x, coords.y + edge, coords.z + edge),
+	//glm::vec3(coords.x, coords.y, coords.z + edge),
+	//glm::vec3(coords.x + edge, coords.y, coords.z + edge),
+	//glm::vec3(coords.x + edge, coords.y + edge, coords.z + edge),
+	//glm::vec3(coords.x, coords.y + edge, coords.z),
+	//glm::vec3(coords.x, coords.y, coords.z),
+	//glm::vec3(coords.x + edge, coords.y, coords.z),
+	//glm::vec3(coords.x + edge, coords.y + edge, coords.z)
+	//};
+
+	//Particle* p;
+
+	//for (auto& element : sverts) {
+	//	p = new Particle;
+	//	p->position = element;
+	//	// TODO other particle initialization
+	//	Particles.push_back(*p);
+	//}
+
+	//test cube code
+
+
+	genMesh(origin);
+	// x + y * w + z * w * d
+	// this is like super messy because add_cube goes in the negative y and z direction, I'll fix this later
+
+	for (int i = 0; i < width - 1; i++)
+	{
+		for (int j = 1; j < height; j++)
+		{
+			for (int k = 1; k < depth; k++)
+			{
+				add_cube(glm::vec3(i, j, k));
+			}
+		}
+	}
 
 	for (auto& element : Particles) {
 		vertices.push_back(element.position);
@@ -162,42 +199,57 @@ void ElasticManager::update_buffer()
 	glBindVertexArray(0);
 }
 
-// TODO: Split this into a cube gen and a func that works off of 8 part indices
-void ElasticManager::add_cube(glm::vec3 coords, float edge)
-{
-
-	
-	// adds a cube, coords is front left
-	std::vector<glm::vec3> sverts{
-		glm::vec3(coords.x, coords.y + edge, coords.z + edge),
-		glm::vec3(coords.x, coords.y, coords.z + edge),
-		glm::vec3(coords.x + edge, coords.y, coords.z + edge),
-		glm::vec3(coords.x + edge, coords.y + edge, coords.z + edge),
-		glm::vec3(coords.x, coords.y + edge, coords.z),
-		glm::vec3(coords.x, coords.y, coords.z),
-		glm::vec3(coords.x + edge, coords.y, coords.z),
-		glm::vec3(coords.x + edge, coords.y + edge, coords.z)
-	};
+void ElasticManager::genMesh(glm::vec3 startpos) {
 
 	Particle* p;
+	int w = width;
+	int h = height;
+	int d = depth;
+	  Particles.resize(w * h * d);
 
-	for (auto& element : sverts) {
-		p = new Particle;
-		p->position = element;
-		// TODO other particle initialization
-		Particles.push_back(*p);
+	for (int x = 0; x < w; x++)
+	{
+		for (int y = 0; y < h; y++) 
+		{
+			for (int z = 0; z < d; z++) 
+			{
+				p = new Particle;
+				p->position = startpos + glm::vec3(x * edgelength, y * edgelength, z * edgelength);
+				Particles[x + y * w + z * w * d] = *p;
+			}
+		}
 	}
+}
+
+void ElasticManager::add_cube(glm::vec3 topleft)
+{
+	/*
+ * Cube indices used below.
+ *    4----7
+ *   /|   /|
+ *  0-+--3 |
+ *  | 5--+-6
+ *  |/   |/
+ *  1----2
+ *
+ */
 	
+	int p0 = idx3d(topleft);
+	int p1 = idx3d(topleft + glm::vec3(0,-1,0));
+	int p2 = idx3d(topleft + glm::vec3(1, -1, 0));
+	int p3 = idx3d(topleft + glm::vec3(1, 0, 0));
+	int p4 = idx3d(topleft + glm::vec3(0, 0, -1));
+	int p5 = idx3d(topleft + glm::vec3(0, -1, -1));
+	int p6 = idx3d(topleft + glm::vec3(1, -1, -1));
+	int p7 = idx3d(topleft + glm::vec3(1, 0, -1));
 
-	Simplex_3* s;
 
-	size_t j = Particles.size() - 8;
 	std::vector<glm::ivec4> tetras{
-		glm::ivec4(j,j + 1,j + 2,j + 5),
-		glm::ivec4(j + 2,j + 5,j + 6,j + 7),
-		glm::ivec4(j,j + 2,j + 3,j + 7),
-		glm::ivec4(j,j + 4,j + 5,j + 7),
-		glm::ivec4(j+2,j,j + 5,j + 7),
+		glm::ivec4(p0,p1,p2,p5),
+		glm::ivec4(p2,p5,p6,p7),
+		glm::ivec4(p0,p2,p3,p7),
+		glm::ivec4(p0,p4,p5,p7),
+		glm::ivec4(p2,p0,p5,p7),
 	};
 
 	for (int i = 0; i < tetras.size(); i++)
@@ -251,3 +303,7 @@ void ElasticManager::genTetra(int p1, int p2, int p3, int p4)
 	Elements.push_back(*s);
 
 }	
+
+int ElasticManager::idx3d(glm::vec3 idx) {
+	return idx.x + idx.y * width + idx.z * width * depth;
+}
