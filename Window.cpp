@@ -1,6 +1,7 @@
 #include "Window.h"
 
 
+
 // Window Properties
 int Window::width;
 int Window::height;
@@ -10,6 +11,7 @@ const char* Window::windowTitle = "GLFW Starter Project";
 //Cube * Window::cube;
 //PointCloud * Window::cubePoints;
 ElasticManager * Window::manager;
+FluidManager* Window::fluidmanager;
 Object* currObj;
 
 // Camera Matrices 
@@ -51,8 +53,9 @@ bool Window::initializeObjects()
 
 
 	manager = new ElasticManager();
+	fluidmanager = new FluidManager(glm::vec3(0, 0, 0),glm::vec3(1,0,0));
 	// Set cube to be the first to display
-	currObj = manager;
+	currObj = fluidmanager;
 
 	return true;
 }

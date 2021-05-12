@@ -8,6 +8,7 @@
 #include "PointCloud.h"*/
 #include "Manager.h"
 #include <memory>
+#include "FluidManager.h"
 
 class Window
 {
@@ -22,7 +23,7 @@ public:
 	//static Cube* cube;
 	//static PointCloud * cubePoints;
 	static ElasticManager* manager;
-
+	static FluidManager* fluidmanager;
 	// Camera Matrices
 	static glm::mat4 projection;
 	static glm::mat4 view;
