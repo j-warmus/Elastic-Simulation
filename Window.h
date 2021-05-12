@@ -3,9 +3,9 @@
 
 #include "main.h"
 #include "shader.h"
-#include "Object.h"
+#include "Object.h"/*
 #include "Cube.h"
-#include "PointCloud.h"
+#include "PointCloud.h"*/
 #include "Manager.h"
 #include <memory>
 
@@ -19,8 +19,8 @@ public:
 	static const char* windowTitle;
 
 	// Objects to Render
-	static Cube* cube;
-	static PointCloud * cubePoints;
+	//static Cube* cube;
+	//static PointCloud * cubePoints;
 	static ElasticManager* manager;
 
 	// Camera Matrices

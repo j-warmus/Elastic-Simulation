@@ -7,8 +7,8 @@ int Window::height;
 const char* Window::windowTitle = "GLFW Starter Project";
 
 // Objects to Render
-Cube * Window::cube;
-PointCloud * Window::cubePoints;
+//Cube * Window::cube;
+//PointCloud * Window::cubePoints;
 ElasticManager * Window::manager;
 Object* currObj;
 
@@ -181,12 +181,12 @@ void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
 			break;
 
 		// switch between the cube and the cube pointCloud
-		case GLFW_KEY_1:
-			currObj = cube;
-			break;
-		case GLFW_KEY_2:
-			currObj = cubePoints;
-			break;
+		//case GLFW_KEY_1:
+		//	currObj = cube;
+		//	break;
+		//case GLFW_KEY_2:
+		//	currObj = cubePoints;
+		//	break;
 
 		default:
 			break;
