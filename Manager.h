@@ -78,6 +78,6 @@ public:
 	int idx3d(glm::vec3 idx);
 
 	int get_timestep() { return timestep; };
-
+	int get_spf() {	return 300;	};
 };
 

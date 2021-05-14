@@ -53,7 +53,7 @@ bool Window::initializeObjects()
 
 
 	manager = new ElasticManager();
-	fluidmanager = new FluidManager(glm::vec3(0, 0, 0),glm::vec3(1,0,0));
+	fluidmanager = new FluidManager(glm::vec3(0, 0, 0), glm::vec3(.8,.8,.8));
 	// Set cube to be the first to display
 	currObj = fluidmanager;
 
@@ -64,6 +64,7 @@ void Window::cleanUp()
 {
 	// Deallcoate the objects.
 	delete manager;
+	delete fluidmanager;
 	//delete cubePoints;
 
 	// Delete the shader program.
@@ -147,7 +148,7 @@ void Window::resizeCallback(GLFWwindow* window, int width, int height)
 void Window::idleCallback()
 {
 	// Perform any necessary updates here 
-	for (int i = 0; i < 300; i++) {
+	for (int i = 0; i < currObj->get_spf(); i++) {
 		currObj->update();
 	}
 }

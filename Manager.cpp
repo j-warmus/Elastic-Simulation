@@ -225,7 +225,7 @@ void ElasticManager::genMesh(glm::vec3 startpos) {
 	int w = width;
 	int h = height;
 	int d = depth;
-	  Particles.resize(w * h * d);
+	Particles.resize(w * h * d);
 
 	for (int x = 0; x < w; x++)
 	{
