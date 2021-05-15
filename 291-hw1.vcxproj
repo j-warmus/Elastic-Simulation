@@ -114,14 +114,17 @@
     <ClCompile Include="Manager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="shader.cpp" />
+    <ClCompile Include="SpatialTable.cpp" />
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FluidManager.h" />
+    <ClInclude Include="FParticle.h" />
     <ClInclude Include="Manager.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="Object.h" />
     <ClInclude Include="shader.h" />
+    <ClInclude Include="SpatialTable.h" />
     <ClInclude Include="Window.h" />
   </ItemGroup>
   <ItemGroup>

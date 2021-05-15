@@ -1,4 +1,7 @@
 #pragma once
+
+#include "FParticle.h"
+#include "SpatialTable.h"
 #include "Object.h"
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
@@ -9,16 +12,6 @@
 #include <random>
 
 
-struct FParticle
-{
-	glm::vec3 position = glm::vec3(0.f, 0.f, 0.f);;
-	glm::vec3 velocity = glm::vec3(0.f, 0.f, 0.f);
-	glm::vec3 force = glm::vec3(0.f, 0.f, 0.f);
-	float mass = 1.f;
-	float density = 1.f;
-	float pressure = 0.f;
-	std::vector<int> neighbors;
-};
 
 class FluidManager : public Object
 {
@@ -66,10 +59,12 @@ private:
 	std::vector<glm::vec3> vertices;
 
 	//Hash table stuff
+	SpatialTable* stable;
 	int p1 = 73856093;
 	int p2 = 19349663;
 	int p3 = 83492791;
-	float cell_spacing = 2*h;
+	float cell_spacing = support;
+	int hash_map_size = 1e5;
 
 public:
 

@@ -6,7 +6,13 @@ FluidManager::FluidManager(glm::vec3 position, glm::vec3 particle_color)
 	origin = position;
 	color = particle_color;
 
+	stable = new SpatialTable();
+	stable->p1 = p1;
+	stable->p2 = p2;
+	stable->p3 = p3;
 
+	stable->d = cell_spacing;
+	stable->m = hash_map_size;
 
 	// Add elements to particle vector
 	gen_fluid();
@@ -90,13 +96,17 @@ void FluidManager::update()
 				}
 			}
 		}
-		// Some skullduggery to make it faster, change this if neigbors arent correct
-		//p.neighbors = j_idxs;
-		//j_idxs.clear();
-		//printf("%d\n", p.neighbors.size());
+
 	}
+	// The non-functional hash table code
 
+	//stable->clear();
+	//stable->build(Particles);
 
+	//
+	//for (auto& p : Particles) {
+	//	stable->getneighbors(p, support, Particles);
+	//}
 
 
 
