@@ -73,49 +73,79 @@ void FluidManager::update()
 	std::vector<int> j_idxs;
 	float Wij;
 	float pi;
-	float pressure;
+	glm::vec3 pressure;
+	glm::vec3 dWij;
+	glm::vec3 d2v;
 	float d_accum = 0.f;
-
+	glm::vec3 dv;
+	glm::vec3 xij;
 	// First, find neighbors
-
+	
 	for (auto& p : Particles) {
+		p.neighbors.clear();
 		for (int i = 0; i < Particles.size(); i++) {
 			if (&Particles[i] != &p) {
 				if (glm::length(p.position - Particles[i].position) < support) {
-					j_idxs.push_back(i);
+					p.neighbors.push_back(i);
 				}
 			}
 		}
 		// Some skullduggery to make it faster, change this if neigbors arent correct
-		p.neighbors = j_idxs;
-		j_idxs.clear();
+		//p.neighbors = j_idxs;
+		//j_idxs.clear();
 		//printf("%d\n", p.neighbors.size());
 	}
+
+
+
+
+
+
+
 
 	// precompute pi and Pi (pressure and density
 	for (auto& p : Particles) {
 		// density
 		for (auto& j : p.neighbors) {
-			Wij = 1.f / powf(h, 3.f) * cubicsplinekernel(glm::length(p.position - Particles[j].position) / h);
+			Wij =  Wijcoef * cubicsplinekernel(glm::length(p.position - Particles[j].position) / h);
+			
 			d_accum += Wij * Particles[j].mass;
 		}
-		p.density = d_accum;
+		Wij = Wijcoef * cubicsplinekernel(glm::length(p.position - p.position) / h);
+		p.density = d_accum + Wij * p.mass;
 		d_accum = 0.f;
-
-		p.pressure = k * (powf(p.density / p0, 7) - 1.f);
-		printf("%f\n", p.density);
+		p.pressure = k * (powf(p.density / p0, 7.f) - 1.f);
 	}
 	for (auto& p : Particles) {
 
 		// pressure
+		pressure = glm::vec3(0, 0, 0);
+		d2v = glm::vec3(0, 0, 0);
+		for (auto& j : p.neighbors) {
+			dWij = dWijcoef * dcubicsplinekernel(glm::length(p.position - Particles[j].position) / h) * glm::normalize(p.position-Particles[j].position);
+			pressure += Particles[j].mass * (p.pressure / (p.density * p.density) + Particles[j].pressure / (Particles[j].density * Particles[j].density)) * dWij;
+			
+			//viscosity precompute
+			xij = p.position - Particles[j].position;
+			d2v += (Particles[j].mass / Particles[j].density) * (p.velocity - Particles[j].velocity) * (glm::dot(xij, dWij) / (glm::dot(xij, xij) + 0.01f * (h * h)));
+		}
+		pressure *= p.density;
 		
-		// stuck intil figure out w gradient
+		p.force += -1.f * (p.mass) * pressure;
+
+		//F viscosity here
+		
+
+		p.force += 2 * p.mass * v * d2v;
+
+		// Gravity
+		p.force.y += p.mass * gravity;
 
 
-		p.velocity += (timestep / p.mass) * p.force;
-		p.velocity.y += timestep * gravity;
-		p.position += timestep * p.velocity;
-		p.force = glm::vec3(0.f, 0.f, 0.f);
+
+
+
+
 
 		//bounding code here
 		if (p.position.y < box_origin.y - box_height / 2) {
@@ -133,7 +163,14 @@ void FluidManager::update()
 		else if (p.position.z > box_origin.z + box_width / 2) {
 			p.force.z -= boundary_constant * (p.position.z - box_origin.z + box_width / 2);
 		}
+		// Integrate
+		p.velocity += (timestep / p.mass) * p.force;
+		p.position += timestep * p.velocity;
+
+		p.force = glm::vec3(0.f, 0.f, 0.f);
 	}
+
+
 
 }
 
@@ -141,7 +178,7 @@ void FluidManager::update_buffer()
 {
 	for (unsigned i = 0; i < Particles.size(); i++) {
 		// put it back in meters or whatever
-		vertices[i] = Particles[i].position/100.f;
+		vertices[i] = Particles[i].position/50.f;
 	}
 
 	glBindVertexArray(VAO);
@@ -155,12 +192,15 @@ void FluidManager::gen_fluid()
 {
 	
 	FParticle* p;
-	float d_mass = powf((2.f / 3.f) * h, 3.f) * p0;
+	float d_mass = (4.f/3.f) * 3.14159 * p0 * h * h * h;
+	std::random_device rd;  //Will be used to obtain a seed for the random number engine
+	std::mt19937 gen(rd());
+	std::uniform_real_distribution<> dis(-1.f, 1.f);
 	for (int x = 0; x < ppside; x++) {
 		for (int y = 0; y < ppside; y++) {
 			for (int z = 0; z < ppside; z++) {
 				p = new FParticle;
-				p->position = origin + glm::vec3(-1 * fluid_width / 2 + fluid_width * x / ppside, -1 * fluid_width / 2 + fluid_width * y / ppside, -1 * fluid_width / 2 + fluid_width * z / ppside);
+				p->position = origin + glm::vec3(-1 * fluid_width / 2 + fluid_width * x / ppside, -1 * fluid_width / 2 + fluid_width * y / ppside, -1 * fluid_width / 2 + fluid_width * z / ppside) + glm::vec3(dis(gen),dis(gen),dis(gen));
 				p->mass = d_mass;
 				Particles.push_back(*p);
 			}
@@ -170,10 +210,10 @@ void FluidManager::gen_fluid()
 
 float FluidManager::cubicsplinekernel(float q) {
 	if (q < 1) {
-		return (3.f / (2.f * 3.14159)) * ((2.f / 3.f) - powf(q, 2.f) + .5f * powf(q, 3.f));
+		return (2.f / 3.f) - q * q  + .5f * q * q * q;
 	}
 	else if (q < 2) {
-		return (3.f / (2.f * 3.14159)) * (1.f / 6.f) * powf((2.f - q), 3);
+		return (1.f / 6.f) * (2.f - q) * (2.f - q) * (2.f - q);
 	}
 	else {
 		return 0.f;
@@ -181,5 +221,13 @@ float FluidManager::cubicsplinekernel(float q) {
 }
 
 float FluidManager::dcubicsplinekernel(float q) {
-	return 0.f;
+	if (q < 1) {
+		return q * (3.f*q - 4)/2.f;
+	}
+	else if (q < 2) {
+		return -1.f * ((q - 2) * (q - 2) / 2.f);
+	}
+	else {
+		return 0.f;
+	}
 }
