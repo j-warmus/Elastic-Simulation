@@ -35,8 +35,8 @@ private:
 	//fps
 	float timestep = 1.f / 18000.f;
 	
-	bool enableDamping = true;
-	float dampingFactor = 1.f;
+	bool enableDamping = false;
+	float dampingFactor = .99997f;
 	
 	// parameters
 	float density = 1000;
@@ -47,9 +47,9 @@ private:
 
 	// mesh (w x l x h in # of particles, not meters)
 	glm::vec3 origin = glm::vec3(-3, 5, -8);
-	int height = 6;
-	int width = 6;
-	int depth = 6;
+	int height = 3;
+	int width = 3;
+	int depth = 3;
 	
 	float edgelength = 1;
 
@@ -58,6 +58,13 @@ private:
 	std::vector<glm::vec3> vertices;
 	std::vector<glm::vec3> indices;
 	int drawmode = 1; // 0 - points, 1 - lines, 2 - quads
+
+	bool same_side(glm::vec3 pos, glm::vec3 v1, glm::vec3 v2, glm::vec3 v3, glm::vec3 v4);
+
+	bool p_in_tetra(Particle p, Simplex_3 t);
+
+	glm::vec3 calc_force(glm::vec3 p, Simplex_3 t);
+
 
 public:
 
@@ -69,7 +76,9 @@ public:
 
 	void update_buffer();
 
-	void genMesh(glm::vec3 startpos);
+	void genMesh(glm::vec3 startpos, int w, int h, int d);
+
+	void add_test_tetra(glm::vec3 startpos, float scale);
 
 	void add_cube(glm::vec3 topleft);
 
@@ -79,5 +88,7 @@ public:
 
 	int get_timestep() { return timestep; };
 
+	
 };
+
 

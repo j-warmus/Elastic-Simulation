@@ -8,46 +8,32 @@ ElasticManager::ElasticManager()
 
 	color = glm::vec3(1.0f, 1.0f, 1.0f);
 
-	//float edge = 1.f;
-	//glm::vec3 coords = glm::vec3(1.f, 1.f, 1.f);
 
-	//std::vector<glm::vec3> sverts{
-	//glm::vec3(coords.x, coords.y + edge, coords.z + edge),
-	//glm::vec3(coords.x, coords.y, coords.z + edge),
-	//glm::vec3(coords.x + edge, coords.y, coords.z + edge),
-	//glm::vec3(coords.x + edge, coords.y + edge, coords.z + edge),
-	//glm::vec3(coords.x, coords.y + edge, coords.z),
-	//glm::vec3(coords.x, coords.y, coords.z),
-	//glm::vec3(coords.x + edge, coords.y, coords.z),
-	//glm::vec3(coords.x + edge, coords.y + edge, coords.z)
-	//};
+	//genMesh(origin, width, height, depth);
+	//// x + y * w + z * w * d
+	//// this is like super messy because add_cube goes in the negative y and z direction, I'll fix this later
 
-	//Particle* p;
-
-	//for (auto& element : sverts) {
-	//	p = new Particle;
-	//	p->position = element;
-	//	// TODO other particle initialization
-	//	Particles.push_back(*p);
+	//for (int i = 0; i < width - 1; i++)
+	//{
+	//	for (int j = 1; j < height; j++)
+	//	{
+	//		for (int k = 1; k < depth; k++)
+	//		{
+	//			add_cube(glm::vec3(i, j, k));
+	//		}
+	//	}
 	//}
 
-	//test cube code
+	for (int i = 0; i < 10; i++) {
+		add_test_tetra(origin + glm::vec3(0, 5 + 3*i, 1), 2.f);
+		add_test_tetra(origin + glm::vec3(2, 3 + 3 * i, 2), 2.f);
+		add_test_tetra(origin + glm::vec3(-2, 1 + 3 * i, 1), 2.f);
 
-
-	genMesh(origin);
-	// x + y * w + z * w * d
-	// this is like super messy because add_cube goes in the negative y and z direction, I'll fix this later
-
-	for (int i = 0; i < width - 1; i++)
-	{
-		for (int j = 1; j < height; j++)
-		{
-			for (int k = 1; k < depth; k++)
-			{
-				add_cube(glm::vec3(i, j, k));
-			}
-		}
 	}
+
+	//add_test_tetra(origin + glm::vec3(0,50,0), 2.f);
+
+
 
 	for (auto& element : Particles) {
 		vertices.push_back(element.position);
@@ -135,14 +121,13 @@ void ElasticManager::update()
 	int p1, p2, p3, p4;
 	glm::vec3 r1, r2, r3, r4;
 	glm::vec3 e1, e2, e3;
-
+	Particle* s = new Particle;
 	for (auto& e : Elements) {
 		p1 = e.p_idx[0];
 		p2 = e.p_idx[1];
 		p3 = e.p_idx[2];
 		p4 = e.p_idx[3];
 
-		// calculate initial values
 		r1 = Particles[p1].position;
 		r2 = Particles[p2].position;
 		r3 = Particles[p3].position;
@@ -183,10 +168,21 @@ void ElasticManager::update()
 			cauchy = 2.f * lame2 * strain + lame1 * trace * glm::mat3(1.f);
 
 		}
+
 		Particles[p1].force += F * cauchy * e.n1;
 		Particles[p2].force += F * cauchy * e.n2;
 		Particles[p3].force += F * cauchy * e.n3;
 		Particles[p4].force += F * cauchy * e.n4;
+
+		//collision here ig
+		for (auto& other_e : Elements) {
+			for (auto& i_vtx : e.p_idx) {
+				if (p_in_tetra(Particles[i_vtx], other_e)) {
+					//printf("COLLISION DETECTED");
+					Particles[i_vtx].force += calc_force(Particles[i_vtx].position, other_e);
+				}
+			}
+		}
 
 	}
 
@@ -196,6 +192,8 @@ void ElasticManager::update()
 		p.velocity.y += timestep * gravity;
 		p.position += timestep * p.velocity;
 		p.force = glm::vec3(0.f,0.f,0.f);
+		// scuffed damping
+		p.velocity *= dampingFactor;
 
 		if (p.position.y < groundPlane) {
 			p.position.y = groundPlane;
@@ -219,13 +217,13 @@ void ElasticManager::update_buffer()
 	glBindVertexArray(0);
 }
 
-void ElasticManager::genMesh(glm::vec3 startpos) {
+//Adds particles to the particle vector.  does it in x, y, z order.  Resizes to w * h *d
+
+// TODO: use an arbitrary particle vector.  Then we can fold into our particles struct after.
+void ElasticManager::genMesh(glm::vec3 startpos, int w, int h, int d) {
 
 	Particle* p;
-	int w = width;
-	int h = height;
-	int d = depth;
-	  Particles.resize(w * h * d);
+	Particles.resize(w * h * d);
 
 	for (int x = 0; x < w; x++)
 	{
@@ -241,6 +239,34 @@ void ElasticManager::genMesh(glm::vec3 startpos) {
 	}
 }
 
+// Ma
+void ElasticManager::add_test_tetra(glm::vec3 startpos, float scale) {
+	
+	Particle* p;
+	int idx = Particles.size();
+
+	p = new Particle;
+	p->position = startpos;
+	Particles.push_back(*p);
+
+	p = new Particle;
+	p->position = startpos + glm::vec3(1, 0, 0) * scale;
+	Particles.push_back(*p);
+
+	p = new Particle;
+	p->position = startpos + glm::vec3(.5, 1, 0) * scale;
+	Particles.push_back(*p);
+
+	p = new Particle;
+	p->position = startpos + glm::vec3(.5, .5, -1) * scale;;
+	Particles.push_back(*p);
+
+	genTetra(idx, idx + 1, idx + 2, idx + 3);
+
+}
+
+// From the idx of the top left particle, makes tetras out of the below and in front.  
+//TODO 
 void ElasticManager::add_cube(glm::vec3 topleft)
 {
 	/*
@@ -281,6 +307,7 @@ void ElasticManager::add_cube(glm::vec3 topleft)
 	
 }
 
+// Takes 4 particle idx's and creates a tetra.  Pushes the tetra to Elements.
 void ElasticManager::genTetra(int p1, int p2, int p3, int p4) 
 {
 	Simplex_3* s = new Simplex_3;
@@ -326,4 +353,42 @@ void ElasticManager::genTetra(int p1, int p2, int p3, int p4)
 
 int ElasticManager::idx3d(glm::vec3 idx) {
 	return idx.x + idx.y * width + idx.z * width * depth;
+}
+
+//check if point is on same side as remaining vertex (v4 is same side as p relative to 
+bool ElasticManager::same_side(glm::vec3 pos, glm::vec3 v1, glm::vec3 v2, glm::vec3 v3, glm::vec3 v4) {
+	glm::vec3 norm = glm::cross(v2 - v1, v3 - v1);
+	float t_dot = glm::dot(norm, v4 - v1);
+	float p_dot = glm::dot(norm, pos - v1);
+	// Epsilon just to reduce likelyhood of self-intersection or other funky business
+	if (p_dot * t_dot > 0.f) { return true; }
+	else { return false; }
+}
+
+//check if point is in tetra
+bool ElasticManager::p_in_tetra(Particle p, Simplex_3 t) {
+	glm::vec3 pos = p.position;
+	glm::vec3 v1 = Particles[t.p_idx[0]].position;
+	glm::vec3 v2 = Particles[t.p_idx[1]].position;
+	glm::vec3 v3 = Particles[t.p_idx[2]].position;
+	glm::vec3 v4 = Particles[t.p_idx[3]].position;
+
+	return same_side(v1, v2, v3, v4, pos) && same_side(v2, v3, v4, v1, pos) && same_side(v3, v4, v1, v2, pos) && same_side(v4, v1, v2, v3, pos);
+}
+
+// calculate centroid of simplex, repusle point away.  Coulombs law based.  Should only be used if intersection exists
+glm::vec3 ElasticManager::calc_force(glm::vec3 p, Simplex_3 t) 
+{
+	// this will need to be adjusted
+	float force = 100000.f;
+
+	int p1 = t.p_idx[0];
+	int p2 = t.p_idx[1];
+	int p3 = t.p_idx[2];
+	int p4 = t.p_idx[3];
+
+	glm::vec3 centroid = (Particles[p1].position + Particles[p3].position + Particles[p2].position + Particles[p4].position) / 4.f;
+	float dist = glm::length(centroid - p);
+
+	return glm::normalize(p - centroid) * force / (dist);
 }
