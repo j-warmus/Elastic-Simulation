@@ -9,21 +9,23 @@ ElasticManager::ElasticManager()
 	color = glm::vec3(1.0f, 1.0f, 1.0f);
 
 
-	genMesh(origin + glm::vec3(0,40,0), width, height, depth);
-	// x + y * w + z * w * d
-	// this is like super messy because add_cube goes in the negative y and z direction, I'll fix this later
+	//genMesh(origin + glm::vec3(0,0,0), width, height, depth);
+	//// x + y * w + z * w * d
+	//// this is like super messy because add_cube goes in the negative y and z direction, I'll fix this later
 
-	for (int i = 0; i < width - 1; i++)
-	{
-		for (int j = 1; j < height; j++)
-		{
-			for (int k = 1; k < depth; k++)
-			{
-				add_cube(glm::vec3(i, j, k));
-			}
-		}
-	}
-
+	//for (int i = 0; i < width - 1; i++)
+	//{
+	//	for (int j = 1; j < height; j++)
+	//	{
+	//		for (int k = 1; k < depth; k++)
+	//		{
+	//			add_cube(glm::vec3(i, j, k));
+	//		}
+	//	}
+	//}
+	//add_test_cube(origin, 2);
+	//add_test_cube(origin + glm::vec3(1,10,0), 2);
+	////tetras for collision testing
 	for (int i = 0; i < 10; i++) {
 		add_test_tetra(origin + glm::vec3(0, 5 + 3*i, 1), 2.f);
 		add_test_tetra(origin + glm::vec3(2, 3 + 3 * i, 2), 2.f);
@@ -31,7 +33,7 @@ ElasticManager::ElasticManager()
 
 	}
 
-	//add_test_tetra(origin + glm::vec3(0,50,0), 2.f);
+	add_test_tetra(origin + glm::vec3(0,50,0), 2.f);
 
 
 
@@ -175,11 +177,20 @@ void ElasticManager::update()
 		Particles[p4].force += F * cauchy * e.n4;
 
 		//collision here ig
-		for (auto& other_e : Elements) {
-			for (auto& i_vtx : e.p_idx) {
-				if (p_in_tetra(Particles[i_vtx], other_e)) {
-					//printf("COLLISION DETECTED");
-					Particles[i_vtx].force += calc_force(Particles[i_vtx].position, other_e);
+		if (enableCollision){
+			for (auto& other_e : Elements) {
+				for (auto& i_vtx : e.p_idx) {
+					if (p_in_tetra(Particles[i_vtx], other_e)) {
+						//printf("COLLISION DETECTED");
+						glm::vec3 force = calc_force(Particles[i_vtx].position, other_e);
+						Particles[i_vtx] .force += force;
+			/*			for (auto& self_vtx : e.p_idx) {
+							Particles[self_vtx].force += force;
+						}*/
+						/*for (auto& other_vtx : other_e.p_idx) {
+							Particles[other_vtx].force += force;
+						}*/
+					}
 				}
 			}
 		}
@@ -239,7 +250,7 @@ void ElasticManager::genMesh(glm::vec3 startpos, int w, int h, int d) {
 	}
 }
 
-// Ma
+// Adds a single tetra. For collision testing.
 void ElasticManager::add_test_tetra(glm::vec3 startpos, float scale) {
 	
 	Particle* p;
@@ -263,6 +274,42 @@ void ElasticManager::add_test_tetra(glm::vec3 startpos, float scale) {
 
 	genTetra(idx, idx + 1, idx + 2, idx + 3);
 
+}
+
+// Adds a single cube with 4 tetras.
+void ElasticManager::add_test_cube(glm::vec3 startpos, float scale) {
+	Particle* p;
+	int idx = Particles.size();
+
+	std::vector<glm::vec3> cubepts;
+
+	cubepts.push_back(startpos);
+	cubepts.push_back(startpos + scale * glm::vec3(0, -1, 0));
+	cubepts.push_back(startpos + scale * glm::vec3(1, -1, 0));
+	cubepts.push_back(startpos + scale * glm::vec3(1, 0, 0));
+	cubepts.push_back(startpos + scale * glm::vec3(0, 0, -1));
+	cubepts.push_back(startpos + scale * glm::vec3(0, -1, -1));
+	cubepts.push_back(startpos + scale * glm::vec3(1, -1, -1));
+	cubepts.push_back(startpos + scale * glm::vec3(1, 0, -1));
+
+	for (auto& pos : cubepts) {
+		p = new Particle;
+		p->position = pos;
+		Particles.push_back(*p);
+	}
+
+	std::vector<glm::ivec4> tetras{
+	glm::ivec4(idx,idx + 1,idx + 2,idx + 5),
+	glm::ivec4(idx + 2,idx + 5,idx + 6,idx + 7),
+	glm::ivec4(idx + 0,idx + 2,idx + 3,idx + 7),
+	glm::ivec4(idx + 0,idx + 4,idx + 5,idx + 7),
+	glm::ivec4(idx + 2,idx + 0,idx + 5,idx + 7),
+	};
+
+	for (int i = 0; i < tetras.size(); i++)
+	{
+		genTetra(tetras[i][0], tetras[i][1], tetras[i][2], tetras[i][3]);
+	}
 }
 
 // From the idx of the top left particle, makes tetras out of the below and in front.  
@@ -361,7 +408,7 @@ bool ElasticManager::same_side(glm::vec3 pos, glm::vec3 v1, glm::vec3 v2, glm::v
 	float t_dot = glm::dot(norm, v4 - v1);
 	float p_dot = glm::dot(norm, pos - v1);
 	// Epsilon just to reduce likelyhood of self-intersection or other funky business
-	if (p_dot * t_dot > 0.f) { return true; }
+	if (p_dot * t_dot > 00000001.f) { return true; }
 	else { return false; }
 }
 
@@ -390,5 +437,9 @@ glm::vec3 ElasticManager::calc_force(glm::vec3 p, Simplex_3 t)
 	glm::vec3 centroid = (Particles[p1].position + Particles[p3].position + Particles[p2].position + Particles[p4].position) / 4.f;
 	float dist = glm::length(centroid - p);
 
-	return glm::normalize(p - centroid) * force / (dist);
+	return glm::normalize(p - centroid) * force/dist;
+
+	//TODO: maybe instead make this toward nearest face
+
+
 }

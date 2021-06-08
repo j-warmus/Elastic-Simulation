@@ -36,6 +36,7 @@ private:
 	float timestep = 1.f / 18000.f;
 	
 	bool enableDamping = false;
+	bool enableCollision = true;
 	float dampingFactor = .99997f;
 	
 	// parameters
@@ -47,10 +48,11 @@ private:
 
 	// mesh (w x l x h in # of particles, not meters)
 	glm::vec3 origin = glm::vec3(-3, 5, -8);
-	int height = 3;
-	int width = 3;
-	int depth = 3;
+	int height = 5;
+	int width = 5;
+	int depth = 5;
 	
+
 	float edgelength = 1;
 
 	std::vector<Particle> Particles;
@@ -79,6 +81,8 @@ public:
 	void genMesh(glm::vec3 startpos, int w, int h, int d);
 
 	void add_test_tetra(glm::vec3 startpos, float scale);
+
+	void add_test_cube(glm::vec3 startpos, float scale);
 
 	void add_cube(glm::vec3 topleft);
 
