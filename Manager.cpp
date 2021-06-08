@@ -9,20 +9,20 @@ ElasticManager::ElasticManager()
 	color = glm::vec3(1.0f, 1.0f, 1.0f);
 
 
-	//genMesh(origin, width, height, depth);
-	//// x + y * w + z * w * d
-	//// this is like super messy because add_cube goes in the negative y and z direction, I'll fix this later
+	genMesh(origin + glm::vec3(0,40,0), width, height, depth);
+	// x + y * w + z * w * d
+	// this is like super messy because add_cube goes in the negative y and z direction, I'll fix this later
 
-	//for (int i = 0; i < width - 1; i++)
-	//{
-	//	for (int j = 1; j < height; j++)
-	//	{
-	//		for (int k = 1; k < depth; k++)
-	//		{
-	//			add_cube(glm::vec3(i, j, k));
-	//		}
-	//	}
-	//}
+	for (int i = 0; i < width - 1; i++)
+	{
+		for (int j = 1; j < height; j++)
+		{
+			for (int k = 1; k < depth; k++)
+			{
+				add_cube(glm::vec3(i, j, k));
+			}
+		}
+	}
 
 	for (int i = 0; i < 10; i++) {
 		add_test_tetra(origin + glm::vec3(0, 5 + 3*i, 1), 2.f);
