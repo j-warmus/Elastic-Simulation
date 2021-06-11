@@ -48,8 +48,8 @@ private:
 	float groundPlane = -3.0f;
 
 	//plasticity
-	float elastic_limit = 0.05f;
-	float plastic_limit = 0.05f;
+	float elastic_limit = 0.001f;
+	float plastic_limit = 0.2f;
 	// mesh (w x l x h in # of particles, not meters)
 	glm::vec3 origin = glm::vec3(-3, 5, -8);
 	int height = 5;

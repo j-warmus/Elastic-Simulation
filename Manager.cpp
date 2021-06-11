@@ -142,8 +142,8 @@ void ElasticManager::update()
 		glm::mat3 T = glm::mat3(e1, e2, e3);
 		glm::mat3 F = T * e.t0inv;
 
-		glm::mat3 elastic_strain = .5f * (glm::transpose(F) * F - glm::mat3(1.f));
-
+		glm::mat3 total_strain = .5f * (glm::transpose(F) * F - glm::mat3(1.f));
+		glm::mat3 elastic_strain = total_strain - e.plastic_strain;
 		// plastic deformation occurs here
 		if (plasticDeformation) {
 			float e_trace = elastic_strain[0][0] + elastic_strain[1][1] + elastic_strain[2][2];
@@ -158,7 +158,7 @@ void ElasticManager::update()
 
 			}
 		}
-		glm::mat3 strain = e.plastic_strain + elastic_strain;
+		glm::mat3 strain = elastic_strain;
 		float lame1 = (youngs * poisson) / ((1.f + poisson) * (1.f - 2.f * poisson));
 		float lame2 = youngs / (2.f * (1.f + poisson));
 		float trace = strain[0][0] + strain[1][1] + strain[2][2];
