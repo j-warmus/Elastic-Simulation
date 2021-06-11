@@ -20,7 +20,7 @@ struct Simplex_3
 {
 	int p_idx[4];
 	glm::mat3 t0inv;
-	glm::mat3 strain;
+	glm::mat3 strain, plastic_strain;
 	glm::vec3 n1, n2, n3, n4;
 	float volume;
 
@@ -36,7 +36,8 @@ private:
 	float timestep = 1.f / 18000.f;
 	
 	bool enableDamping = false;
-	bool enableCollision = true;
+	bool enableCollision = false;
+	bool plasticDeformation = true;
 	float dampingFactor = .99997f;
 	
 	// parameters
@@ -46,6 +47,9 @@ private:
 	float poisson = 0.25;
 	float groundPlane = -3.0f;
 
+	//plasticity
+	float elastic_limit = 0.05f;
+	float plastic_limit = 0.05f;
 	// mesh (w x l x h in # of particles, not meters)
 	glm::vec3 origin = glm::vec3(-3, 5, -8);
 	int height = 5;
@@ -66,6 +70,8 @@ private:
 	bool p_in_tetra(Particle p, Simplex_3 t);
 
 	glm::vec3 calc_force(glm::vec3 p, Simplex_3 t);
+
+	float frob_norm(glm::mat3 mat);
 
 
 public:

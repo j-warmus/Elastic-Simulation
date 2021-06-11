@@ -9,31 +9,31 @@ ElasticManager::ElasticManager()
 	color = glm::vec3(1.0f, 1.0f, 1.0f);
 
 
-	//genMesh(origin + glm::vec3(0,0,0), width, height, depth);
-	//// x + y * w + z * w * d
-	//// this is like super messy because add_cube goes in the negative y and z direction, I'll fix this later
+	genMesh(origin + glm::vec3(0,0,0), width, height, depth);
+	// x + y * w + z * w * d
+	// this is like super messy because add_cube goes in the negative y and z direction, I'll fix this later
 
-	//for (int i = 0; i < width - 1; i++)
-	//{
-	//	for (int j = 1; j < height; j++)
-	//	{
-	//		for (int k = 1; k < depth; k++)
-	//		{
-	//			add_cube(glm::vec3(i, j, k));
-	//		}
-	//	}
-	//}
+	for (int i = 0; i < width - 1; i++)
+	{
+		for (int j = 1; j < height; j++)
+		{
+			for (int k = 1; k < depth; k++)
+			{
+				add_cube(glm::vec3(i, j, k));
+			}
+		}
+	}
 	//add_test_cube(origin, 2);
 	//add_test_cube(origin + glm::vec3(1,10,0), 2);
 	////tetras for collision testing
-	for (int i = 0; i < 10; i++) {
-		add_test_tetra(origin + glm::vec3(0, 5 + 3*i, 1), 2.f);
-		add_test_tetra(origin + glm::vec3(2, 3 + 3 * i, 2), 2.f);
-		add_test_tetra(origin + glm::vec3(-2, 1 + 3 * i, 1), 2.f);
+	//for (int i = 0; i < 10; i++) {
+	//	add_test_tetra(origin + glm::vec3(0, 5 + 3*i, 1), 2.f);
+	//	add_test_tetra(origin + glm::vec3(2, 3 + 3 * i, 2), 2.f);
+	//	add_test_tetra(origin + glm::vec3(-2, 1 + 3 * i, 1), 2.f);
 
-	}
+	//}
 
-	add_test_tetra(origin + glm::vec3(0,50,0), 2.f);
+	//add_test_tetra(origin + glm::vec3(0,50,0), 2.f);
 
 
 
@@ -142,11 +142,28 @@ void ElasticManager::update()
 		glm::mat3 T = glm::mat3(e1, e2, e3);
 		glm::mat3 F = T * e.t0inv;
 
-		glm::mat3 strain = .5f * (glm::transpose(F) * F - glm::mat3(1.f));
+		glm::mat3 elastic_strain = .5f * (glm::transpose(F) * F - glm::mat3(1.f));
 
+		// plastic deformation occurs here
+		if (plasticDeformation) {
+			float e_trace = elastic_strain[0][0] + elastic_strain[1][1] + elastic_strain[2][2];
+			glm::mat3 d_elastic_strain = elastic_strain - e_trace / 3.f * glm::mat3(1.f);
+
+			float mag_de_strain = frob_norm(d_elastic_strain);
+
+			glm::mat3 d_plastic = glm::mat3(0.f);
+			if (mag_de_strain > elastic_limit) {
+				d_plastic = ((mag_de_strain - elastic_limit) / mag_de_strain) * d_elastic_strain;
+				e.plastic_strain = (e.plastic_strain + d_plastic) * fminf(1.f, plastic_limit / frob_norm(e.plastic_strain + d_plastic));
+
+			}
+		}
+		glm::mat3 strain = e.plastic_strain + elastic_strain;
 		float lame1 = (youngs * poisson) / ((1.f + poisson) * (1.f - 2.f * poisson));
 		float lame2 = youngs / (2.f * (1.f + poisson));
 		float trace = strain[0][0] + strain[1][1] + strain[2][2];
+
+
 
 		glm::mat3 cauchy;
 		// damping
@@ -389,6 +406,9 @@ void ElasticManager::genTetra(int p1, int p2, int p3, int p4)
 	//printf("%f %f %f\n", s->n4.x, s->n3.y, s->n3.z);
 	//printf("%f\n", s->volume);
 
+	// Initialize plastic strain
+	s->plastic_strain = glm::mat3(0.f);
+
 	// Initialize masses
 	for (int i = 0; i < 4; i++) {
 		Particles[s->p_idx[i]].mass += (density * s->volume) / 4.f;
@@ -442,4 +462,14 @@ glm::vec3 ElasticManager::calc_force(glm::vec3 p, Simplex_3 t)
 	//TODO: maybe instead make this toward nearest face
 
 
+}
+
+float ElasticManager::frob_norm(glm::mat3 mat) {
+	float sum = 0;
+	for (int i = 0; i < 3; i++) {
+		for (int j = 0; j < 3; j++) {
+			sum += mat[i][j] * mat[i][j];
+		}
+	}
+	return sqrt(sum);
 }
