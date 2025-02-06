@@ -10,35 +10,49 @@
 class Window
 {
 public:
+	// Renderable Object
+	std::unique_ptr<Renderable> curRenderable;
 
 	// Window Properties
-	static int width;
-	static int height;
-	static const char* windowTitle;
+	int width;
+	int height;
+	std::string windowTitle;
+
 
 	// Camera Matrices
-	static glm::mat4 projection;
-	static glm::mat4 view;
-	static glm::vec3 eyePos, lookAtPoint, upVector;
+	glm::mat4 projection;
+	glm::mat4 view;
+	glm::vec3 eyePos, lookAtPoint, upVector;
 
 	// Shader Program ID
-	static GLuint shaderProgram;
+	GLuint shaderProgram;
+
+	// Main loop
+	void Window::displayLoop() const;
 
 	// Constructors and Destructors
-	static bool initializeProgram();
-	static bool initializeObjects();
-	static void cleanUp();
+	Window();
+	~Window();
+	bool initializeProgram();
+	bool initializeObjects();
+	void cleanUp() const;
 
 	// Window functions
-	static GLFWwindow* createWindow(int width, int height);
-	static void resizeCallback(GLFWwindow* window, int width, int height);
+	GLFWwindow* createWindow(int width, int height);
 
 	// Draw and Update functions
-	static void idleCallback();
-	static void displayCallback(GLFWwindow*);
+	void idleCallback() const;
+	void displayCallback(GLFWwindow*) const;
 
-	// Callbacks
+	// Callbacks, have to be static to be used by GLFW
 	static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+	static void errorCallback(int error, const char* description);
+	static void resizeCallback(GLFWwindow* window, int width, int height);
+
+private:
+	GLFWwindow* glfwWindow;
+	void setupCallbacks(GLFWwindow* window) const;
+	
 };
 
 #endif

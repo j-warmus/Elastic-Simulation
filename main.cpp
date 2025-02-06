@@ -1,22 +1,5 @@
 #include "main.h"
 
-void error_callback(int error, const char* description)
-{
-	// Print error.
-	std::cerr << description << std::endl;
-}
-
-void setup_callbacks(GLFWwindow* window)
-{
-	// Set the error callback.
-	glfwSetErrorCallback(error_callback);
-	
-	// Set the window resize callback.
-	glfwSetWindowSizeCallback(window, Window::resizeCallback);
-
-	// Set the key callback.
-	glfwSetKeyCallback(window, Window::keyCallback);
-}
 
 void setup_opengl_settings()
 {
@@ -52,45 +35,14 @@ void print_versions()
 int main(void)
 {
 	// Create the GLFW window.
-	GLFWwindow* window = Window::createWindow(640, 480);
-	if (!window) 
-		exit(EXIT_FAILURE);
+	std::unique_ptr<Window> window = std::make_unique<Window>();
 
 	// Print OpenGL and GLSL versions.
 	print_versions();
 
-	// Setup callbacks.
-	setup_callbacks(window);
-
 	// Setup OpenGL settings.
 	setup_opengl_settings();
-
-	// Initialize the shader program; exit if initialization fails.
-	if (!Window::initializeProgram()) 
-		exit(EXIT_FAILURE);
-
-	// Initialize objects/pointers for rendering; exit if initialization fails.
-	if (!Window::initializeObjects()) 
-		exit(EXIT_FAILURE);
-	
-	// Loop while GLFW window should stay open.
-	while (!glfwWindowShouldClose(window))
-	{
-		// Main render display callback. Rendering of objects is done here. (Draw)
-		Window::displayCallback(window);
-
-		// Idle callback. Updating objects, etc. can be done here. (Update)
-		Window::idleCallback();
-	}
-
-	// destroy objects created
-	Window::cleanUp();
-
-	// Destroy the window.
-	glfwDestroyWindow(window);
-
-	// Terminate GLFW.
-	glfwTerminate();
+	window->displayLoop();
 
 	exit(EXIT_SUCCESS);
 }

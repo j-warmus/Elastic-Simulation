@@ -1,28 +1,30 @@
 #include "Window.h"
 
+Window::Window() {
+	// Todo Demagic number
+	glfwWindow = createWindow(640, 480);
+	if (!glfwWindow) exit(EXIT_FAILURE);
 
-// Window Properties
-int Window::width;
-int Window::height;
-const char* Window::windowTitle = "GLFW Starter Project";
+	// Setup callbacks.
+	setupCallbacks(glfwWindow);
 
-// Objects to Render
-Renderable* curRenderable;
+	windowTitle = std::string("GLFW Starter Project");
 
-// Camera Matrices 
-// Projection matrix:
-glm::mat4 Window::projection; 
+	// Todo figure out better way to error handle here
+	if (!initializeProgram())
+		exit(EXIT_FAILURE);
 
-// View Matrix:
-glm::vec3 Window::eyePos(0, 0, 20);			// Camera position.
-glm::vec3 Window::lookAtPoint(0, 0, 0);		// The point we are looking at.
-glm::vec3 Window::upVector(0, 1, 0);		// The up direction of the camera.
-glm::mat4 Window::view = glm::lookAt(Window::eyePos, Window::lookAtPoint, Window::upVector);
+	if (!initializeObjects())
+		exit(EXIT_FAILURE);
 
-// Shader Program ID
-GLuint Window::shaderProgram; 
+	// View Matrix:
+	eyePos		= glm::vec3{ 0, 0, 20 };		// Camera position.
+	lookAtPoint = glm::vec3{ 0, 0, 0 };		// The point we are looking at.
+	upVector	= glm::vec3{ 0, 1, 0 };		// The up direction of the camera.
+	view		= glm::lookAt(Window::eyePos, Window::lookAtPoint, Window::upVector);
 
 
+}
 
 bool Window::initializeProgram() {
 	// Create a shader program with a vertex shader and a fragment shader.
@@ -40,12 +42,12 @@ bool Window::initializeProgram() {
 
 bool Window::initializeObjects()
 {
-	curRenderable = new ElasticManager();
+	curRenderable = std::make_unique<ElasticManager>();
 
 	return true;
 }
 
-void Window::cleanUp()
+void Window::cleanUp() const
 {
 	// Delete the shader program.
 	glDeleteProgram(shaderProgram);
@@ -75,8 +77,9 @@ GLFWwindow* Window::createWindow(int width, int height)
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-	// Create the GLFW window.
-	GLFWwindow* window = glfwCreateWindow(width, height, windowTitle, NULL, NULL);
+	// Create the GLFW window, set Window class as user for callbacks
+	GLFWwindow* window = glfwCreateWindow(width, height, windowTitle.c_str(), NULL, NULL);
+	glfwSetWindowUserPointer(window, static_cast<void*>(this));
 
 	// Check if the window could not be created.
 	if (!window)
@@ -115,17 +118,20 @@ void Window::resizeCallback(GLFWwindow* window, int width, int height)
 	// In case your Mac has a retina display.
 	glfwGetFramebufferSize(window, &width, &height); 
 #endif
-	Window::width = width;
-	Window::height = height;
+	Window* windowObj = static_cast<Window*>(glfwGetWindowUserPointer(window));
+	if (!windowObj) exit(EXIT_FAILURE);
+	windowObj->width = width;
+	windowObj->height = height;
 	// Set the viewport size.
 	glViewport(0, 0, width, height);
 
 	// Set the projection matrix.
-	Window::projection = glm::perspective(glm::radians(60.0), 
-								double(width) / (double)height, 1.0, 1000.0);
+	windowObj->projection = glm::perspective(glm::radians(60.0), 
+								static_cast<double>(width) / 
+								static_cast<double>(height), 1.0, 1000.0);
 }
 
-void Window::idleCallback()
+void Window::idleCallback() const
 {
 	// TODO: make this actually run at a stable framerate
 	// Perform any necessary updates here 
@@ -134,7 +140,7 @@ void Window::idleCallback()
 	}
 }
 
-void Window::displayCallback(GLFWwindow* window)
+void Window::displayCallback(GLFWwindow* window) const
 {	
 	// Clear the color and depth buffers
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	
@@ -164,4 +170,43 @@ void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
 			break;
 		}
 	}
+}
+
+void Window::errorCallback(int error, const char* description)
+{
+	// Print error.
+	std::cerr << description << std::endl;
+}
+
+void Window::setupCallbacks(GLFWwindow* window) const
+{
+	// Set the error callback.
+	glfwSetErrorCallback(errorCallback);
+
+	// Set the window resize callback.
+	glfwSetWindowSizeCallback(window, Window::resizeCallback);
+
+	// Set the key callback.
+	glfwSetKeyCallback(window, Window::keyCallback);
+}
+
+void Window::displayLoop() const
+{
+	// Loop while GLFW window should stay open.
+	while (!glfwWindowShouldClose(glfwWindow))
+	{
+		// Main render display callback. Rendering of objects is done here. (Draw)
+		displayCallback(glfwWindow);
+
+		// Idle callback. Updating objects, etc. can be done here. (Update)
+		idleCallback();
+	}
+}
+
+Window::~Window() {
+	cleanUp();
+	// Destroy the window.
+	glfwDestroyWindow(glfwWindow);
+	// Terminate GLFW.
+	glfwTerminate();
 }
