@@ -26,13 +26,17 @@ struct Simplex_3
 
 };
 
-class ElasticManager : public Object
+class ElasticManager : public Renderable
 {
 private:
 	GLuint VAO;
 	GLuint VBO, EBO;
 
+	glm::mat4 model;
+	glm::vec3 color;
+
 	//fps
+	// TODO: demagic this
 	float timestep = 1.f / 18000.f;
 	
 	bool enableDamping = false;

@@ -117,13 +117,10 @@ void ElasticManager::draw(const glm::mat4& view, const glm::mat4& projection, GL
 
 void ElasticManager::update()
 {
-	//model = model * glm::rotate(glm::radians(1.f), glm::vec3(0.0f, 1.0f, 0.0f));
-
 	// update elements
 	int p1, p2, p3, p4;
 	glm::vec3 r1, r2, r3, r4;
 	glm::vec3 e1, e2, e3;
-	Particle* s = new Particle;
 	for (auto& e : Elements) {
 		p1 = e.p_idx[0];
 		p2 = e.p_idx[1];
@@ -193,20 +190,13 @@ void ElasticManager::update()
 		Particles[p3].force += F * cauchy * e.n3;
 		Particles[p4].force += F * cauchy * e.n4;
 
-		//collision here ig
+		//collision
 		if (enableCollision){
 			for (auto& other_e : Elements) {
 				for (auto& i_vtx : e.p_idx) {
 					if (p_in_tetra(Particles[i_vtx], other_e)) {
-						//printf("COLLISION DETECTED");
 						glm::vec3 force = calc_force(Particles[i_vtx].position, other_e);
 						Particles[i_vtx] .force += force;
-			/*			for (auto& self_vtx : e.p_idx) {
-							Particles[self_vtx].force += force;
-						}*/
-						/*for (auto& other_vtx : other_e.p_idx) {
-							Particles[other_vtx].force += force;
-						}*/
 					}
 				}
 			}
@@ -220,8 +210,7 @@ void ElasticManager::update()
 		p.velocity.y += timestep * gravity;
 		p.position += timestep * p.velocity;
 		p.force = glm::vec3(0.f,0.f,0.f);
-		// scuffed damping
-		p.velocity *= dampingFactor;
+		// p.velocity *= dampingFactor;
 
 		if (p.position.y < groundPlane) {
 			p.position.y = groundPlane;

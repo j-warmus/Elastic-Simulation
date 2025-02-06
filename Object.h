@@ -14,16 +14,9 @@
 //#include <string>
 //#include <vector>
 
-class Object
+class Renderable
 {
-protected:
-	glm::mat4 model;
-	glm::vec3 color;
-
 public:
-	glm::mat4 getModel() { return model; }
-	glm::vec3 getColor() { return color; }
-
 	virtual void draw(const glm::mat4& view, const glm::mat4& projection, GLuint shader) = 0;
 	virtual void update() = 0;
 };

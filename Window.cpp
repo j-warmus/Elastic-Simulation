@@ -7,10 +7,7 @@ int Window::height;
 const char* Window::windowTitle = "GLFW Starter Project";
 
 // Objects to Render
-//Cube * Window::cube;
-//PointCloud * Window::cubePoints;
-ElasticManager * Window::manager;
-Object* currObj;
+Renderable* curRenderable;
 
 // Camera Matrices 
 // Projection matrix:
@@ -43,26 +40,13 @@ bool Window::initializeProgram() {
 
 bool Window::initializeObjects()
 {
-	// Create a cube of size 5.
-	//cube = new Cube(5.0f);
-
-	// Create a point cloud consisting of cube vertices.
-	//cubePoints = new PointCloud("foo", 100);
-
-
-	manager = new ElasticManager();
-	// Set cube to be the first to display
-	currObj = manager;
+	curRenderable = new ElasticManager();
 
 	return true;
 }
 
 void Window::cleanUp()
 {
-	// Deallcoate the objects.
-	delete manager;
-	//delete cubePoints;
-
 	// Delete the shader program.
 	glDeleteProgram(shaderProgram);
 }
@@ -143,9 +127,10 @@ void Window::resizeCallback(GLFWwindow* window, int width, int height)
 
 void Window::idleCallback()
 {
+	// TODO: make this actually run at a stable framerate
 	// Perform any necessary updates here 
 	for (int i = 0; i < 300; i++) {
-		currObj->update();
+		curRenderable->update();
 	}
 }
 
@@ -155,7 +140,7 @@ void Window::displayCallback(GLFWwindow* window)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	
 
 	// Render the objects
-	currObj->draw(view, projection, shaderProgram);
+	curRenderable->draw(view, projection, shaderProgram);
 
 	// Gets events, including input such as keyboard and mouse or window resizing
 	glfwPollEvents();
@@ -166,10 +151,6 @@ void Window::displayCallback(GLFWwindow* window)
 
 void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-	/*
-	 * TODO: Modify below to add your key callbacks.
-	 */
-	
 	// Check for a key press.
 	if (action == GLFW_PRESS)
 	{
@@ -179,15 +160,6 @@ void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
 			// Close the window. This causes the program to also terminate.
 			glfwSetWindowShouldClose(window, GL_TRUE);				
 			break;
-
-		// switch between the cube and the cube pointCloud
-		//case GLFW_KEY_1:
-		//	currObj = cube;
-		//	break;
-		//case GLFW_KEY_2:
-		//	currObj = cubePoints;
-		//	break;
-
 		default:
 			break;
 		}

@@ -3,9 +3,7 @@
 
 #include "main.h"
 #include "shader.h"
-#include "Object.h"/*
-#include "Cube.h"
-#include "PointCloud.h"*/
+#include "Object.h"
 #include "Manager.h"
 #include <memory>
 
@@ -17,11 +15,6 @@ public:
 	static int width;
 	static int height;
 	static const char* windowTitle;
-
-	// Objects to Render
-	//static Cube* cube;
-	//static PointCloud * cubePoints;
-	static ElasticManager* manager;
 
 	// Camera Matrices
 	static glm::mat4 projection;
