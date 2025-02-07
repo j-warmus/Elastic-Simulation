@@ -16,7 +16,7 @@ public:
 	// Window Properties
 	int m_width;
 	int m_height;
-	std::string m_windowTitle;
+	const std::string m_windowTitle;
 
 
 	// Camera Matrices
@@ -31,7 +31,7 @@ public:
 	GLuint shaderProgram;
 
 	// Main loop
-	void Window::displayLoop() const;
+	void displayLoop() const;
 
 	// Constructors and Destructors
 	Window();
