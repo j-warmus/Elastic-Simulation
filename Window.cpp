@@ -1,14 +1,17 @@
 #include "Window.h"
 
-Window::Window() {
-	// Todo Demagic number
-	glfwWindow = createWindow(640, 480);
-	if (!glfwWindow) exit(EXIT_FAILURE);
+
+//TODO all error code needs look.
+Window::Window() : Window(1200, 1200, "GLFW Window"){}
+
+Window::Window(const int width, const int height, const std::string& title) 
+	: m_width(width), m_height(height), m_windowTitle(title) 
+{
+	// Create GLFW window object
+	if (!createWindow(m_width, m_height)) exit(EXIT_FAILURE);
 
 	// Setup callbacks.
-	setupCallbacks(glfwWindow);
-
-	windowTitle = std::string("GLFW Starter Project");
+	setupCallbacks();
 
 	// Todo figure out better way to error handle here
 	if (!initializeProgram())
@@ -18,12 +21,7 @@ Window::Window() {
 		exit(EXIT_FAILURE);
 
 	// View Matrix:
-	eyePos		= glm::vec3{ 0, 0, 20 };		// Camera position.
-	lookAtPoint = glm::vec3{ 0, 0, 0 };		// The point we are looking at.
-	upVector	= glm::vec3{ 0, 1, 0 };		// The up direction of the camera.
-	view		= glm::lookAt(Window::eyePos, Window::lookAtPoint, Window::upVector);
-
-
+	m_view = glm::lookAt(m_eyePos, m_lookAtPoint, m_upVector);
 }
 
 bool Window::initializeProgram() {
@@ -42,8 +40,7 @@ bool Window::initializeProgram() {
 
 bool Window::initializeObjects()
 {
-	curRenderable = std::make_unique<ElasticManager>();
-
+	curRenderer = std::make_unique<ElasticManager>();
 	return true;
 }
 
@@ -53,13 +50,13 @@ void Window::cleanUp() const
 	glDeleteProgram(shaderProgram);
 }
 
-GLFWwindow* Window::createWindow(int width, int height)
+bool Window::createWindow(const int width, const int height)
 {
 	// Initialize GLFW.
 	if (!glfwInit())
 	{
 		std::cerr << "Failed to initialize GLFW" << std::endl;
-		return NULL;
+		return 0;
 	}
 
 	// 4x antialiasing.
@@ -78,19 +75,19 @@ GLFWwindow* Window::createWindow(int width, int height)
 #endif
 
 	// Create the GLFW window, set Window class as user for callbacks
-	GLFWwindow* window = glfwCreateWindow(width, height, windowTitle.c_str(), NULL, NULL);
-	glfwSetWindowUserPointer(window, static_cast<void*>(this));
+	m_glfwWindow = glfwCreateWindow(width, height, m_windowTitle.c_str(), NULL, NULL);
+	glfwSetWindowUserPointer(m_glfwWindow, static_cast<void*>(this));
 
 	// Check if the window could not be created.
-	if (!window)
+	if (!m_glfwWindow)
 	{
 		std::cerr << "Failed to open GLFW window." << std::endl;
 		glfwTerminate();
-		return NULL;
+		return 0;
 	}
 
 	// Make the context of the window.
-	glfwMakeContextCurrent(window);
+	glfwMakeContextCurrent(m_glfwWindow);
 
 #ifndef __APPLE__
 	// On Windows and Linux, we need GLEW to provide modern OpenGL functionality.
@@ -99,7 +96,7 @@ GLFWwindow* Window::createWindow(int width, int height)
 	if (glewInit())
 	{
 		std::cerr << "Failed to initialize GLEW" << std::endl;
-		return NULL;
+		return 0;
 	}
 #endif
 
@@ -107,9 +104,9 @@ GLFWwindow* Window::createWindow(int width, int height)
 	glfwSwapInterval(0);
 
 	// Call the resize callback to make sure things get drawn immediately.
-	Window::resizeCallback(window, width, height);
+	Window::resizeCallback(m_glfwWindow, width, height);
 
-	return window;
+	return 1;
 }
 
 void Window::resizeCallback(GLFWwindow* window, int width, int height)
@@ -120,39 +117,39 @@ void Window::resizeCallback(GLFWwindow* window, int width, int height)
 #endif
 	Window* windowObj = static_cast<Window*>(glfwGetWindowUserPointer(window));
 	if (!windowObj) exit(EXIT_FAILURE);
-	windowObj->width = width;
-	windowObj->height = height;
+	windowObj->m_width = width;
+	windowObj->m_height = height;
 	// Set the viewport size.
 	glViewport(0, 0, width, height);
 
 	// Set the projection matrix.
-	windowObj->projection = glm::perspective(glm::radians(60.0), 
+	windowObj->m_projection = glm::perspective(glm::radians(60.0), 
 								static_cast<double>(width) / 
 								static_cast<double>(height), 1.0, 1000.0);
 }
 
-void Window::idleCallback() const
+void Window::update() const
 {
 	// TODO: make this actually run at a stable framerate
 	// Perform any necessary updates here 
 	for (int i = 0; i < 300; i++) {
-		curRenderable->update();
+		curRenderer->update();
 	}
 }
 
-void Window::displayCallback(GLFWwindow* window) const
+void Window::display() const
 {	
 	// Clear the color and depth buffers
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	
 
 	// Render the objects
-	curRenderable->draw(view, projection, shaderProgram);
+	curRenderer->draw(m_view, m_projection, shaderProgram);
 
 	// Gets events, including input such as keyboard and mouse or window resizing
 	glfwPollEvents();
 
 	// Swap buffers.
-	glfwSwapBuffers(window);
+	glfwSwapBuffers(m_glfwWindow);
 }
 
 void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -178,35 +175,35 @@ void Window::errorCallback(int error, const char* description)
 	std::cerr << description << std::endl;
 }
 
-void Window::setupCallbacks(GLFWwindow* window) const
+void Window::setupCallbacks() const
 {
 	// Set the error callback.
 	glfwSetErrorCallback(errorCallback);
 
 	// Set the window resize callback.
-	glfwSetWindowSizeCallback(window, Window::resizeCallback);
+	glfwSetWindowSizeCallback(m_glfwWindow, Window::resizeCallback);
 
 	// Set the key callback.
-	glfwSetKeyCallback(window, Window::keyCallback);
+	glfwSetKeyCallback(m_glfwWindow, Window::keyCallback);
 }
 
 void Window::displayLoop() const
 {
 	// Loop while GLFW window should stay open.
-	while (!glfwWindowShouldClose(glfwWindow))
+	while (!glfwWindowShouldClose(m_glfwWindow))
 	{
-		// Main render display callback. Rendering of objects is done here. (Draw)
-		displayCallback(glfwWindow);
+		// Call renderer draw
+		display();
 
 		// Idle callback. Updating objects, etc. can be done here. (Update)
-		idleCallback();
+		update();
 	}
 }
 
 Window::~Window() {
 	cleanUp();
 	// Destroy the window.
-	glfwDestroyWindow(glfwWindow);
+	glfwDestroyWindow(m_glfwWindow);
 	// Terminate GLFW.
 	glfwTerminate();
 }

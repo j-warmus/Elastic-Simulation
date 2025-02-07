@@ -26,7 +26,7 @@ struct Simplex_3
 
 };
 
-class ElasticManager : public Renderable
+class ElasticManager : public Renderer
 {
 private:
 	GLuint VAO;

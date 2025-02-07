@@ -14,7 +14,7 @@
 //#include <string>
 //#include <vector>
 
-class Renderable
+class Renderer
 {
 public:
 	virtual void draw(const glm::mat4& view, const glm::mat4& projection, GLuint shader) = 0;

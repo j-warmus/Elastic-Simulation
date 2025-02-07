@@ -10,19 +10,22 @@
 class Window
 {
 public:
-	// Renderable Object
-	std::unique_ptr<Renderable> curRenderable;
+	// Renderer Object
+	std::unique_ptr<Renderer> curRenderer;
 
 	// Window Properties
-	int width;
-	int height;
-	std::string windowTitle;
+	int m_width;
+	int m_height;
+	std::string m_windowTitle;
 
 
 	// Camera Matrices
-	glm::mat4 projection;
-	glm::mat4 view;
-	glm::vec3 eyePos, lookAtPoint, upVector;
+	// TODO these should probably all be part of the renderer?
+	glm::mat4 m_projection;
+	glm::mat4 m_view;
+	glm::vec3 m_eyePos		= glm::vec3{0, 0, 20};
+	glm::vec3 m_lookAtPoint	= glm::vec3{0, 0, 0};
+	glm::vec3 m_upVector	= glm::vec3{0, 1, 0};;
 
 	// Shader Program ID
 	GLuint shaderProgram;
@@ -32,26 +35,29 @@ public:
 
 	// Constructors and Destructors
 	Window();
+	Window(const int width, const int height, const std::string& title);
+	// Todo impelment Window(eyepos, lookat, up, const int width, const int height, )
 	~Window();
 	bool initializeProgram();
 	bool initializeObjects();
 	void cleanUp() const;
 
-	// Window functions
-	GLFWwindow* createWindow(int width, int height);
+	// Generates m_glfwWindow, returns error code
+	bool createWindow(int width, int height);
 
-	// Draw and Update functions
-	void idleCallback() const;
-	void displayCallback(GLFWwindow*) const;
+	// Draw and Update renderer
+	void update() const;
+	void display() const;
 
-	// Callbacks, have to be static to be used by GLFW
+	// GLFW callbacks, have to be static to be used by GLFW
 	static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 	static void errorCallback(int error, const char* description);
 	static void resizeCallback(GLFWwindow* window, int width, int height);
 
 private:
-	GLFWwindow* glfwWindow;
-	void setupCallbacks(GLFWwindow* window) const;
+	// Raw pointer necessary due to opaque GLFWwindow struct
+	GLFWwindow* m_glfwWindow;
+	void setupCallbacks() const;
 	
 };
 
