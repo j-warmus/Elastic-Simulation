@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Object.h"
+#include "Renderer.h"
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -26,7 +26,7 @@ struct Simplex_3
 
 };
 
-class ElasticManager : public Renderer
+class PhysicsRenderer : public Renderer
 {
 private:
 	GLuint VAO;
@@ -67,7 +67,7 @@ private:
 	std::vector<Simplex_3> Elements;
 	std::vector<glm::vec3> vertices;
 	std::vector<glm::vec3> indices;
-	int drawmode = 1; // 0 - points, 1 - lines, 2 - quads
+	int drawmode = 2; // 0 - points, 1 - lines, 2 - quads
 
 	bool same_side(glm::vec3 pos, glm::vec3 v1, glm::vec3 v2, glm::vec3 v3, glm::vec3 v4);
 
@@ -80,8 +80,8 @@ private:
 
 public:
 
-	ElasticManager();
-	~ElasticManager();
+	PhysicsRenderer();
+	~PhysicsRenderer();
 
 	void draw(const glm::mat4& view, const glm::mat4& projection, GLuint shader);
 	void update();

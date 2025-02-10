@@ -1,8 +1,8 @@
-#include "Manager.h"
+#include "PhysicsRenderer.h"
 
 
 
-ElasticManager::ElasticManager()
+PhysicsRenderer::PhysicsRenderer()
 {
 	model = glm::scale(glm::vec3(2.f));
 
@@ -78,14 +78,14 @@ ElasticManager::ElasticManager()
 
 
 
-ElasticManager::~ElasticManager()
+PhysicsRenderer::~PhysicsRenderer()
 {
 	glDeleteBuffers(1, &VBO);
 	glDeleteBuffers(1, &EBO);
 	glDeleteVertexArrays(1, &VAO);
 }
 
-void ElasticManager::draw(const glm::mat4& view, const glm::mat4& projection, GLuint shader)
+void PhysicsRenderer::draw(const glm::mat4& view, const glm::mat4& projection, GLuint shader)
 {
 	// Actiavte the shader program 
 	glUseProgram(shader);
@@ -115,7 +115,7 @@ void ElasticManager::draw(const glm::mat4& view, const glm::mat4& projection, GL
 	glUseProgram(0);
 }
 
-void ElasticManager::update()
+void PhysicsRenderer::update()
 {
 	// update elements
 	int p1, p2, p3, p4;
@@ -220,7 +220,7 @@ void ElasticManager::update()
 	}
 }
 
-void ElasticManager::update_buffer()
+void PhysicsRenderer::update_buffer()
 {
 	vertices.clear();
 	for (auto& element : Particles) {
@@ -237,7 +237,7 @@ void ElasticManager::update_buffer()
 //Adds particles to the particle vector.  does it in x, y, z order.  Resizes to w * h *d
 
 // TODO: use an arbitrary particle vector.  Then we can fold into our particles struct after.
-void ElasticManager::genMesh(glm::vec3 startpos, int w, int h, int d) {
+void PhysicsRenderer::genMesh(glm::vec3 startpos, int w, int h, int d) {
 
 	Particle* p;
 	Particles.resize(w * h * d);
@@ -257,7 +257,7 @@ void ElasticManager::genMesh(glm::vec3 startpos, int w, int h, int d) {
 }
 
 // Adds a single tetra. For collision testing.
-void ElasticManager::add_test_tetra(glm::vec3 startpos, float scale) {
+void PhysicsRenderer::add_test_tetra(glm::vec3 startpos, float scale) {
 	
 	Particle* p;
 	int idx = Particles.size();
@@ -283,7 +283,7 @@ void ElasticManager::add_test_tetra(glm::vec3 startpos, float scale) {
 }
 
 // Adds a single cube with 4 tetras.
-void ElasticManager::add_test_cube(glm::vec3 startpos, float scale) {
+void PhysicsRenderer::add_test_cube(glm::vec3 startpos, float scale) {
 	Particle* p;
 	int idx = Particles.size();
 
@@ -320,7 +320,7 @@ void ElasticManager::add_test_cube(glm::vec3 startpos, float scale) {
 
 // From the idx of the top left particle, makes tetras out of the below and in front.  
 //TODO 
-void ElasticManager::add_cube(glm::vec3 topleft)
+void PhysicsRenderer::add_cube(glm::vec3 topleft)
 {
 	/*
  * Cube indices used below.
@@ -361,7 +361,7 @@ void ElasticManager::add_cube(glm::vec3 topleft)
 }
 
 // Takes 4 particle idx's and creates a tetra.  Pushes the tetra to Elements.
-void ElasticManager::genTetra(int p1, int p2, int p3, int p4) 
+void PhysicsRenderer::genTetra(int p1, int p2, int p3, int p4) 
 {
 	Simplex_3* s = new Simplex_3;
 	s->p_idx[0] = p1;
@@ -407,12 +407,12 @@ void ElasticManager::genTetra(int p1, int p2, int p3, int p4)
 
 }	
 
-int ElasticManager::idx3d(glm::vec3 idx) {
+int PhysicsRenderer::idx3d(glm::vec3 idx) {
 	return idx.x + idx.y * width + idx.z * width * depth;
 }
 
 //check if point is on same side as remaining vertex (v4 is same side as p relative to 
-bool ElasticManager::same_side(glm::vec3 pos, glm::vec3 v1, glm::vec3 v2, glm::vec3 v3, glm::vec3 v4) {
+bool PhysicsRenderer::same_side(glm::vec3 pos, glm::vec3 v1, glm::vec3 v2, glm::vec3 v3, glm::vec3 v4) {
 	glm::vec3 norm = glm::cross(v2 - v1, v3 - v1);
 	float t_dot = glm::dot(norm, v4 - v1);
 	float p_dot = glm::dot(norm, pos - v1);
@@ -422,7 +422,7 @@ bool ElasticManager::same_side(glm::vec3 pos, glm::vec3 v1, glm::vec3 v2, glm::v
 }
 
 //check if point is in tetra
-bool ElasticManager::p_in_tetra(Particle p, Simplex_3 t) {
+bool PhysicsRenderer::p_in_tetra(Particle p, Simplex_3 t) {
 	glm::vec3 pos = p.position;
 	glm::vec3 v1 = Particles[t.p_idx[0]].position;
 	glm::vec3 v2 = Particles[t.p_idx[1]].position;
@@ -433,7 +433,7 @@ bool ElasticManager::p_in_tetra(Particle p, Simplex_3 t) {
 }
 
 // calculate centroid of simplex, repusle point away.  Coulombs law based.  Should only be used if intersection exists
-glm::vec3 ElasticManager::calc_force(glm::vec3 p, Simplex_3 t) 
+glm::vec3 PhysicsRenderer::calc_force(glm::vec3 p, Simplex_3 t) 
 {
 	// this will need to be adjusted
 	float force = 100000.f;
@@ -453,7 +453,7 @@ glm::vec3 ElasticManager::calc_force(glm::vec3 p, Simplex_3 t)
 
 }
 
-float ElasticManager::frob_norm(glm::mat3 mat) {
+float PhysicsRenderer::frob_norm(glm::mat3 mat) {
 	float sum = 0;
 	for (int i = 0; i < 3; i++) {
 		for (int j = 0; j < 3; j++) {

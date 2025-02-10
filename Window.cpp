@@ -40,7 +40,7 @@ bool Window::initializeProgram() {
 
 bool Window::initializeObjects()
 {
-	curRenderer = std::make_unique<ElasticManager>();
+	curRenderer = std::make_unique<PhysicsRenderer>();
 	return true;
 }
 

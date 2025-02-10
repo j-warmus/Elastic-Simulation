@@ -11,14 +11,12 @@
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-//#include <string>
-//#include <vector>
-
 class Renderer
 {
 public:
 	virtual void draw(const glm::mat4& view, const glm::mat4& projection, GLuint shader) = 0;
 	virtual void update() = 0;
+	virtual ~Renderer() {};
 };
 
 #endif

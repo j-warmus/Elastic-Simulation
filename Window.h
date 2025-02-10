@@ -3,8 +3,8 @@
 
 #include "main.h"
 #include "shader.h"
-#include "Object.h"
-#include "Manager.h"
+#include "Renderer.h"
+#include "PhysicsRenderer.h"
 #include <memory>
 
 class Window
