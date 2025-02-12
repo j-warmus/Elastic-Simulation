@@ -1,5 +1,4 @@
-#ifndef _OBJECT_H_
-#define _OBJECT_H_
+#pragma once
 
 #ifdef __APPLE__
 #include <OpenGL/gl3.h>
@@ -18,6 +17,4 @@ public:
 	virtual void update() = 0;
 	virtual ~Renderer() {};
 };
-
-#endif
 

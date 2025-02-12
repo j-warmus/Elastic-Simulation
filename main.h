@@ -1,5 +1,4 @@
-#ifndef _MAIN_H_
-#define _MAIN_H_
+#pragma once
 
 #ifdef __APPLE__
 #define GLFW_INCLUDE_GLCOREARB
@@ -13,4 +12,3 @@
 #include <stdio.h>
 #include "Window.h"
 
-#endif

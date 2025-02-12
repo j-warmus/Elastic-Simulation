@@ -1,6 +1,9 @@
 #pragma once
 
 #include "Renderer.h"
+#include "main.h"
+#include "RenderBackend.h"
+#include "OpenGlBackend.h"
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -29,11 +32,12 @@ struct Simplex_3
 class PhysicsRenderer : public Renderer
 {
 private:
-	GLuint VAO;
-	GLuint VBO, EBO;
+	std::unique_ptr<RenderBackend> renderBackend;
 
-	glm::mat4 model;
-	glm::vec3 color;
+	glm::mat4 m_model;
+	glm::vec3 m_color;
+	glm::mat4 m_view;
+	glm::mat4 m_projection;
 
 	//fps
 	// TODO: demagic this
@@ -83,8 +87,11 @@ public:
 	PhysicsRenderer();
 	~PhysicsRenderer();
 
-	void draw(const glm::mat4& view, const glm::mat4& projection, GLuint shader);
-	void update();
+	// TODO: this HAS to be generic, for now use derived for testing
+	
+
+	void draw(const glm::mat4& view, const glm::mat4& projection, GLuint shader) override;
+	void update() override;
 
 	void update_buffer();
 

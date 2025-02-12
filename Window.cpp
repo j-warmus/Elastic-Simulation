@@ -13,12 +13,7 @@ Window::Window(const int width, const int height, const std::string& title)
 	// Setup callbacks.
 	setupCallbacks();
 
-	// Todo figure out better way to error handle here
-	if (!initializeProgram())
-		exit(EXIT_FAILURE);
-
-	if (!initializeObjects())
-		exit(EXIT_FAILURE);
+	curRenderer = std::make_unique<PhysicsRenderer>();
 
 	// View Matrix:
 	m_view = glm::lookAt(m_eyePos, m_lookAtPoint, m_upVector);
@@ -35,12 +30,6 @@ bool Window::initializeProgram() {
 		return false;
 	}
 
-	return true;
-}
-
-bool Window::initializeObjects()
-{
-	curRenderer = std::make_unique<PhysicsRenderer>();
 	return true;
 }
 

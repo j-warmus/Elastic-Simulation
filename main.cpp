@@ -37,11 +37,6 @@ int main(void)
 	// Create the GLFW window.
 	std::unique_ptr<Window> window = std::make_unique<Window>();
 
-	// Print OpenGL and GLSL versions.
-	print_versions();
-
-	// Setup OpenGL settings.
-	setup_opengl_settings();
 	window->displayLoop();
 
 	exit(EXIT_SUCCESS);
