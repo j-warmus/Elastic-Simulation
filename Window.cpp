@@ -19,26 +19,6 @@ Window::Window(const int width, const int height, const std::string& title)
 	m_view = glm::lookAt(m_eyePos, m_lookAtPoint, m_upVector);
 }
 
-bool Window::initializeProgram() {
-	// Create a shader program with a vertex shader and a fragment shader.
-	shaderProgram = LoadShaders("shaders/shader.vert", "shaders/shader.frag");
-
-	// Check the shader program.
-	if (!shaderProgram)
-	{
-		std::cerr << "Failed to initialize shader program" << std::endl;
-		return false;
-	}
-
-	return true;
-}
-
-void Window::cleanUp() const
-{
-	// Delete the shader program.
-	glDeleteProgram(shaderProgram);
-}
-
 bool Window::createWindow(const int width, const int height)
 {
 	// Initialize GLFW.
@@ -106,10 +86,7 @@ void Window::resizeCallback(GLFWwindow* window, int width, int height)
 #endif
 	Window* windowObj = static_cast<Window*>(glfwGetWindowUserPointer(window));
 	if (!windowObj) exit(EXIT_FAILURE);
-	windowObj->m_width = width;
-	windowObj->m_height = height;
-	// Set the viewport size.
-	glViewport(0, 0, width, height);
+	windowObj->setDimensions(width, height);
 
 	// Set the projection matrix.
 	windowObj->m_projection = glm::perspective(glm::radians(60.0), 
@@ -126,11 +103,14 @@ void Window::update() const
 	}
 }
 
-void Window::display() const
+void Window::display()
 {	
-	// Clear the color and depth buffers
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	
-
+	// Resize viewport
+	if (m_resizeFlag == true){
+		curRenderer->setViewDimensions(m_width, m_height);
+		m_resizeFlag = false;
+	}
+	
 	// Render the objects
 	curRenderer->draw(m_view, m_projection, shaderProgram);
 
@@ -139,6 +119,14 @@ void Window::display() const
 
 	// Swap buffers.
 	glfwSwapBuffers(m_glfwWindow);
+}
+
+void Window::setDimensions(int width, int height)
+{
+	// update dims and set flag to resize window on next display() call
+	m_height = height;
+	m_width = width;
+	m_resizeFlag = true;
 }
 
 void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -176,7 +164,7 @@ void Window::setupCallbacks() const
 	glfwSetKeyCallback(m_glfwWindow, Window::keyCallback);
 }
 
-void Window::displayLoop() const
+void Window::displayLoop()
 {
 	// Loop while GLFW window should stay open.
 	while (!glfwWindowShouldClose(m_glfwWindow))
@@ -190,7 +178,6 @@ void Window::displayLoop() const
 }
 
 Window::~Window() {
-	cleanUp();
 	// Destroy the window.
 	glfwDestroyWindow(m_glfwWindow);
 	// Terminate GLFW.

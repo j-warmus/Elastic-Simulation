@@ -20,7 +20,8 @@ public:
 	void draw(int elems_to_draw, const glm::mat4& view, const glm::mat4& projection, const glm::mat4& model, const glm::vec3& color) override;
 	bool initializeShadersFromFile(const std::string& vertexShaderPath, const std::string& fragShaderPath) override;
 	void updateVertexBuffer(const std::vector<glm::vec3>& vertices) const override;
-	
+	void updateViewport(int width, int height);
+
 private:
 	void setOpenGlSettings() const;
 	void printVersionInfo() const;

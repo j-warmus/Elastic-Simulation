@@ -225,6 +225,13 @@ void PhysicsRenderer::update()
 	}
 }
 
+void PhysicsRenderer::setViewDimensions(int width, int height)
+{
+	m_width = width;
+	m_height = height;
+	renderBackend->updateViewport(m_width, m_height);
+}
+
 void PhysicsRenderer::update_buffer()
 {
 	// Todo ???

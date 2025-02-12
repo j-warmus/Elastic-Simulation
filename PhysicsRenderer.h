@@ -39,6 +39,9 @@ private:
 	glm::mat4 m_view;
 	glm::mat4 m_projection;
 
+	int m_width;
+	int m_height;
+
 	//fps
 	// TODO: demagic this
 	float timestep = 1.f / 18000.f;
@@ -92,6 +95,7 @@ public:
 
 	void draw(const glm::mat4& view, const glm::mat4& projection, GLuint shader) override;
 	void update() override;
+	void setViewDimensions(int width, int height);
 
 	void update_buffer();
 

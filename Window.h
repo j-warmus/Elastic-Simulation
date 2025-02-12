@@ -16,6 +16,7 @@ public:
 	int m_width;
 	int m_height;
 	const std::string m_windowTitle;
+	bool m_resizeFlag = false;
 
 
 	// Camera Matrices
@@ -30,23 +31,21 @@ public:
 	GLuint shaderProgram;
 
 	// Main loop
-	void displayLoop() const;
+	void displayLoop();
 
 	// Constructors and Destructors
 	Window();
 	Window(const int width, const int height, const std::string& title);
 	// Todo impelment Window(eyepos, lookat, up, const int width, const int height, )
 	~Window();
-	bool initializeProgram();
-	bool initializeObjects();
-	void cleanUp() const;
 
 	// Generates m_glfwWindow, returns error code
 	bool createWindow(int width, int height);
 
 	// Draw and Update renderer
 	void update() const;
-	void display() const;
+	void display();
+	void setDimensions(int width, int height);
 
 	// GLFW callbacks, have to be static to be used by GLFW
 	static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);

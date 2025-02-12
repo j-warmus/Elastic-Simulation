@@ -39,6 +39,9 @@ OpenGlBackend::~OpenGlBackend()
 
 void OpenGlBackend::draw(int elems_to_draw, const glm::mat4& view, const glm::mat4& projection, const glm::mat4& model, const glm::vec3& color)
 {
+	// Clear the color and depth buffers
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 	// Actiavte the shader program 
 	glUseProgram(shaderProgram);
 
@@ -116,4 +119,9 @@ void OpenGlBackend::updateVertexBuffer(const std::vector<glm::vec3>& vertices) c
 	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * vertices.size(), vertices.data());
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
+}
+
+void OpenGlBackend::updateViewport(int width, int height)
+{
+	glViewport(0, 0, width, height);
 }
