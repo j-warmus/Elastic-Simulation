@@ -10,6 +10,8 @@
 #include <GL/glew.h>
 #include <memory>
 #include <vector>
+// TODO remove this once its not needed for refactor
+#include "PhysicsUtil.h"
 
 struct Particle
 {
@@ -76,13 +78,9 @@ private:
 	std::vector<glm::vec3> indices;
 	int drawmode = 2; // 0 - points, 1 - lines, 2 - quads
 
-	bool same_side(glm::vec3 pos, glm::vec3 v1, glm::vec3 v2, glm::vec3 v3, glm::vec3 v4);
-
 	bool p_in_tetra(Particle p, Simplex_3 t);
 
 	glm::vec3 calc_force(glm::vec3 p, Simplex_3 t);
-
-	float frob_norm(glm::mat3 mat);
 
 
 public:

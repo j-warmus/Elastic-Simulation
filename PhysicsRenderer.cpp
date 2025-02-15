@@ -1,7 +1,5 @@
 #include "PhysicsRenderer.h"
 
-
-
 PhysicsRenderer::PhysicsRenderer()
 {
 	m_model = glm::scale(glm::vec3(2.f));
@@ -102,12 +100,12 @@ void PhysicsRenderer::update()
 			float e_trace = elastic_strain[0][0] + elastic_strain[1][1] + elastic_strain[2][2];
 			glm::mat3 d_elastic_strain = elastic_strain - e_trace / 3.f * glm::mat3(1.f);
 
-			float mag_de_strain = frob_norm(d_elastic_strain);
+			float mag_de_strain = PhysicsUtil::calcFrobeniusNorm(d_elastic_strain);
 
 			glm::mat3 d_plastic = glm::mat3(0.f);
 			if (mag_de_strain > elastic_limit) {
 				d_plastic = ((mag_de_strain - elastic_limit) / mag_de_strain) * d_elastic_strain;
-				e.plastic_strain = (e.plastic_strain + d_plastic) * fminf(1.f, plastic_limit / frob_norm(e.plastic_strain + d_plastic));
+				e.plastic_strain = (e.plastic_strain + d_plastic) * fminf(1.f, plastic_limit / PhysicsUtil::calcFrobeniusNorm(e.plastic_strain + d_plastic));
 
 			}
 		}
@@ -371,17 +369,8 @@ int PhysicsRenderer::idx3d(glm::vec3 idx) {
 	return idx.x + idx.y * width + idx.z * width * depth;
 }
 
-//check if point is on same side as remaining vertex (v4 is same side as p relative to 
-bool PhysicsRenderer::same_side(glm::vec3 pos, glm::vec3 v1, glm::vec3 v2, glm::vec3 v3, glm::vec3 v4) {
-	glm::vec3 norm = glm::cross(v2 - v1, v3 - v1);
-	float t_dot = glm::dot(norm, v4 - v1);
-	float p_dot = glm::dot(norm, pos - v1);
-	// Epsilon just to reduce likelyhood of self-intersection or other funky business
-	if (p_dot * t_dot > 00000001.f) { return true; }
-	else { return false; }
-}
-
 //check if point is in tetra
+// TODO: what is the particle reference here? needs to be stripped.  
 bool PhysicsRenderer::p_in_tetra(Particle p, Simplex_3 t) {
 	glm::vec3 pos = p.position;
 	glm::vec3 v1 = Particles[t.p_idx[0]].position;
@@ -389,7 +378,7 @@ bool PhysicsRenderer::p_in_tetra(Particle p, Simplex_3 t) {
 	glm::vec3 v3 = Particles[t.p_idx[2]].position;
 	glm::vec3 v4 = Particles[t.p_idx[3]].position;
 
-	return same_side(v1, v2, v3, v4, pos) && same_side(v2, v3, v4, v1, pos) && same_side(v3, v4, v1, v2, pos) && same_side(v4, v1, v2, v3, pos);
+	return PhysicsUtil::isSameSide(v1, v2, v3, v4, pos) && PhysicsUtil::isSameSide(v2, v3, v4, v1, pos) && PhysicsUtil::isSameSide(v3, v4, v1, v2, pos) && PhysicsUtil::isSameSide(v4, v1, v2, v3, pos);
 }
 
 // calculate centroid of simplex, repusle point away.  Coulombs law based.  Should only be used if intersection exists
@@ -409,16 +398,4 @@ glm::vec3 PhysicsRenderer::calc_force(glm::vec3 p, Simplex_3 t)
 	return glm::normalize(p - centroid) * force/dist;
 
 	//TODO: maybe instead make this toward nearest face
-
-
-}
-
-float PhysicsRenderer::frob_norm(glm::mat3 mat) {
-	float sum = 0;
-	for (int i = 0; i < 3; i++) {
-		for (int j = 0; j < 3; j++) {
-			sum += mat[i][j] * mat[i][j];
-		}
-	}
-	return sqrt(sum);
 }
