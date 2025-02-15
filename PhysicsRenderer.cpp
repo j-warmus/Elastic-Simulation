@@ -276,7 +276,7 @@ void PhysicsRenderer::add_test_tetra(glm::vec3 startpos, float scale) {
 	
 	Particle* p;
 	int idx = Particles.size();
-
+	// TODO . . . this is terrible
 	p = new Particle;
 	p->position = startpos;
 	Particles.push_back(*p);
