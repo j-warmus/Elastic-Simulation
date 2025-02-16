@@ -7,9 +7,16 @@ PhysicsRenderer::PhysicsRenderer()
 	m_color = glm::vec3(1.0f, 1.0f, 1.0f);
 
 
+	// PROBLEM: physics renderer class relies on vertices and indices.  
+	// Shouldn't actually care about model, the elastics renderer can handle model
+	// Model loading has two parts: generating the particles, and generating the tetras.  Both are specific to the handler
+	// Right now, doesn't have to be abstract.  Later, could be.
+	// Ideally, something like loadmodel and gentetrasfrom model generically
+	// 
+	// Todo This should probably use a model loader interface.
 	genMesh(origin + glm::vec3(0,0,0), width, height, depth);
 	// x + y * w + z * w * d
-	// this is like super messy because add_cube goes in the negative y and z direction, I'll fix this later
+	// this is super messy because add_cube goes in the negative y and z direction, I'll fix this later
 
 	for (int i = 0; i < width - 1; i++)
 	{
@@ -21,19 +28,6 @@ PhysicsRenderer::PhysicsRenderer()
 			}
 		}
 	}
-	//add_test_cube(origin, 2);
-	//add_test_cube(origin + glm::vec3(1,10,0), 2);
-	////tetras for collision testing
-	//for (int i = 0; i < 10; i++) {
-	//	add_test_tetra(origin + glm::vec3(0, 5 + 3*i, 1), 2.f);
-	//	add_test_tetra(origin + glm::vec3(2, 3 + 3 * i, 2), 2.f);
-	//	add_test_tetra(origin + glm::vec3(-2, 1 + 3 * i, 1), 2.f);
-
-	//}
-
-	//add_test_tetra(origin + glm::vec3(0,50,0), 2.f);
-
-
 
 	for (auto& element : Particles) {
 		vertices.push_back(element.position);
@@ -43,11 +37,12 @@ PhysicsRenderer::PhysicsRenderer()
 	// create EBO from simplexes
 	std::vector<glm::ivec3> indices{};
 
+	// NOTE: this has repeats
 	for (auto& element : Elements) {
-		indices.push_back(glm::ivec3(element.p_idx[0], element.p_idx[1], element.p_idx[2]));
-		indices.push_back(glm::ivec3(element.p_idx[0], element.p_idx[1], element.p_idx[3]));
-		indices.push_back(glm::ivec3(element.p_idx[0], element.p_idx[2], element.p_idx[3]));
-		indices.push_back(glm::ivec3(element.p_idx[1], element.p_idx[2], element.p_idx[3]));
+		indices.push_back(glm::ivec3(element.particleIdx[0], element.particleIdx[1], element.particleIdx[2]));
+		indices.push_back(glm::ivec3(element.particleIdx[0], element.particleIdx[1], element.particleIdx[3]));
+		indices.push_back(glm::ivec3(element.particleIdx[0], element.particleIdx[2], element.particleIdx[3]));
+		indices.push_back(glm::ivec3(element.particleIdx[1], element.particleIdx[2], element.particleIdx[3]));
 	}
 
 	renderBackend = std::make_unique<OpenGlBackend>(vertices,indices);
@@ -69,17 +64,21 @@ void PhysicsRenderer::draw(const glm::mat4& view, const glm::mat4& projection, G
 	renderBackend->draw(Elements.size(), view, projection, m_model, m_color);
 }
 
+// Todo: this is parallelizable but nontrivially.  Need to ensure particle force update is atomic
 void PhysicsRenderer::update()
 {
 	// update elements
-	int p1, p2, p3, p4;
-	glm::vec3 r1, r2, r3, r4;
-	glm::vec3 e1, e2, e3;
+	auto t1 = std::chrono::high_resolution_clock::now();
+
 	for (auto& e : Elements) {
-		p1 = e.p_idx[0];
-		p2 = e.p_idx[1];
-		p3 = e.p_idx[2];
-		p4 = e.p_idx[3];
+		int p1, p2, p3, p4;
+		glm::vec3 r1, r2, r3, r4;
+		glm::vec3 e1, e2, e3;
+
+		p1 = e.particleIdx[0];
+		p2 = e.particleIdx[1];
+		p3 = e.particleIdx[2];
+		p4 = e.particleIdx[3];
 
 		r1 = Particles[p1].position;
 		r2 = Particles[p2].position;
@@ -144,10 +143,10 @@ void PhysicsRenderer::update()
 		Particles[p3].force += F * cauchy * e.n3;
 		Particles[p4].force += F * cauchy * e.n4;
 
-		//collision
 		if (enableCollision){
 			for (auto& other_e : Elements) {
-				for (auto& i_vtx : e.p_idx) {
+				for (int i = 0; i < 4; ++i) {
+					auto i_vtx = e.particleIdx[i];
 					if (p_in_tetra(Particles[i_vtx], other_e)) {
 						glm::vec3 force = calc_force(Particles[i_vtx].position, other_e);
 						Particles[i_vtx] .force += force;
@@ -172,6 +171,12 @@ void PhysicsRenderer::update()
 		}
 
 	}
+
+	auto t2 = std::chrono::high_resolution_clock::now();
+	std::cout << "Simulation took "
+		<< std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count()
+		<< "microseconds\n";
+
 }
 
 void PhysicsRenderer::setViewDimensions(int width, int height)
@@ -194,6 +199,8 @@ void PhysicsRenderer::update_buffer()
 
 //Adds particles to the particle vector.  does it in x, y, z order.  Resizes to w * h *d
 
+// Creates grid of particles. Should be called something like genParticles or genVertices?
+
 // TODO: use an arbitrary particle vector.  Then we can fold into our particles struct after.
 void PhysicsRenderer::genMesh(glm::vec3 startpos, int w, int h, int d) {
 
@@ -214,70 +221,10 @@ void PhysicsRenderer::genMesh(glm::vec3 startpos, int w, int h, int d) {
 	}
 }
 
-// Adds a single tetra. For collision testing.
-void PhysicsRenderer::add_test_tetra(glm::vec3 startpos, float scale) {
-	
-	Particle* p;
-	int idx = Particles.size();
-	// TODO . . . this is terrible
-	p = new Particle;
-	p->position = startpos;
-	Particles.push_back(*p);
-
-	p = new Particle;
-	p->position = startpos + glm::vec3(1, 0, 0) * scale;
-	Particles.push_back(*p);
-
-	p = new Particle;
-	p->position = startpos + glm::vec3(.5, 1, 0) * scale;
-	Particles.push_back(*p);
-
-	p = new Particle;
-	p->position = startpos + glm::vec3(.5, .5, -1) * scale;;
-	Particles.push_back(*p);
-
-	genTetra(idx, idx + 1, idx + 2, idx + 3);
-
-}
-
-// Adds a single cube with 4 tetras.
-void PhysicsRenderer::add_test_cube(glm::vec3 startpos, float scale) {
-	Particle* p;
-	int idx = Particles.size();
-
-	std::vector<glm::vec3> cubepts;
-
-	cubepts.push_back(startpos);
-	cubepts.push_back(startpos + scale * glm::vec3(0, -1, 0));
-	cubepts.push_back(startpos + scale * glm::vec3(1, -1, 0));
-	cubepts.push_back(startpos + scale * glm::vec3(1, 0, 0));
-	cubepts.push_back(startpos + scale * glm::vec3(0, 0, -1));
-	cubepts.push_back(startpos + scale * glm::vec3(0, -1, -1));
-	cubepts.push_back(startpos + scale * glm::vec3(1, -1, -1));
-	cubepts.push_back(startpos + scale * glm::vec3(1, 0, -1));
-
-	for (auto& pos : cubepts) {
-		p = new Particle;
-		p->position = pos;
-		Particles.push_back(*p);
-	}
-
-	std::vector<glm::ivec4> tetras{
-	glm::ivec4(idx,idx + 1,idx + 2,idx + 5),
-	glm::ivec4(idx + 2,idx + 5,idx + 6,idx + 7),
-	glm::ivec4(idx + 0,idx + 2,idx + 3,idx + 7),
-	glm::ivec4(idx + 0,idx + 4,idx + 5,idx + 7),
-	glm::ivec4(idx + 2,idx + 0,idx + 5,idx + 7),
-	};
-
-	for (int i = 0; i < tetras.size(); i++)
-	{
-		genTetra(tetras[i][0], tetras[i][1], tetras[i][2], tetras[i][3]);
-	}
-}
-
 // From the idx of the top left particle, makes tetras out of the below and in front.  
 //TODO 
+
+// This is insanely arcane. 
 void PhysicsRenderer::add_cube(glm::vec3 topleft)
 {
 	/*
@@ -290,7 +237,7 @@ void PhysicsRenderer::add_cube(glm::vec3 topleft)
  *  1----2
  *
  */
-	
+	// Gets all 8 particles indices of a cube
 	int p0 = idx3d(topleft);
 	int p1 = idx3d(topleft + glm::vec3(0,-1,0));
 	int p2 = idx3d(topleft + glm::vec3(1, -1, 0));
@@ -300,7 +247,8 @@ void PhysicsRenderer::add_cube(glm::vec3 topleft)
 	int p6 = idx3d(topleft + glm::vec3(1, -1, -1));
 	int p7 = idx3d(topleft + glm::vec3(1, 0, -1));
 
-
+	// generate all 5 tetras formed by a cube. . .
+	// is there a way to automate this?
 	std::vector<glm::ivec4> tetras{
 		glm::ivec4(p0,p1,p2,p5),
 		glm::ivec4(p2,p5,p6,p7),
@@ -311,7 +259,7 @@ void PhysicsRenderer::add_cube(glm::vec3 topleft)
 
 	for (int i = 0; i < tetras.size(); i++)
 	{
-		genTetra(tetras[i][0], tetras[i][1], tetras[i][2], tetras[i][3]);
+		Elements.push_back(genTetra(tetras[i]));
 	}
 
 
@@ -319,50 +267,45 @@ void PhysicsRenderer::add_cube(glm::vec3 topleft)
 }
 
 // Takes 4 particle idx's and creates a tetra.  Pushes the tetra to Elements.
-void PhysicsRenderer::genTetra(int p1, int p2, int p3, int p4) 
+Tetra PhysicsRenderer::genTetra(const glm::ivec4& indices) 
 {
-	Simplex_3* s = new Simplex_3;
-	s->p_idx[0] = p1;
-	s->p_idx[1] = p2;
-	s->p_idx[2] = p3;
-	s->p_idx[3] = p4;
+	Tetra s{};
+	auto& p1 = Particles.at(indices[0]);
+	auto& p2 = Particles.at(indices[1]);
+	auto& p3 = Particles.at(indices[2]);
+	auto& p4 = Particles.at(indices[3]);
+
+	s.particleIdx = indices;
 
 	// calculate initial values
-	glm::vec3 r1 = Particles[p1].position;
-	glm::vec3 r2 = Particles[p2].position;
-	glm::vec3 r3 = Particles[p3].position;
-	glm::vec3 r4 = Particles[p4].position;
+	glm::vec3 r1 = p1.position;
+	glm::vec3 r2 = p2.position;
+	glm::vec3 r3 = p3.position;
+	glm::vec3 r4 = p4.position;
 
 	glm::vec3 e1 = r1 - r4;
 	glm::vec3 e2 = r2 - r4;
 	glm::vec3 e3 = r3 - r4;
 	
-	s->volume = (1.f / 6.f) * glm::dot(glm::cross(e1, e2), e3);
-	if (s->volume < 0) { printf("Volume below 0 error. \n"); }
+	s.volume = (1.f / 6.f) * glm::dot(glm::cross(e1, e2), e3);
+	assert(s.volume > 0.f && "Volume less than 0 for a Tetra");
 
-	//TODO make sure this isn't incorrect
-	s->t0inv = glm::inverse(glm::mat3(e1, e2, e3));
+	s.t0inv = glm::inverse(glm::mat3(e1, e2, e3));
 
-	s->n1 = .5f * glm::cross(r4 - r2, r3 - r2);
-	s->n2 = .5f * glm::cross(r3 - r1, r4 - r1);
-	s->n3 = .5f * glm::cross(r4 - r1, r2 - r1);
-	s->n4 = .5f * glm::cross(r2 - r1, r3 - r1);
-	//printf("%f %f %f\n", s->n1.x, s->n1.y, s->n1.z);
-	//printf("%f %f %f\n", s->n2.x, s->n2.y, s->n2.z);
-	//printf("%f %f %f\n", s->n3.x, s->n3.y, s->n3.z);
-	//printf("%f %f %f\n", s->n4.x, s->n3.y, s->n3.z);
-	//printf("%f\n", s->volume);
-
+	s.n1 = .5f * glm::cross(r4 - r2, r3 - r2);
+	s.n2 = .5f * glm::cross(r3 - r1, r4 - r1);
+	s.n3 = .5f * glm::cross(r4 - r1, r2 - r1);
+	s.n4 = .5f * glm::cross(r2 - r1, r3 - r1);
+	
 	// Initialize plastic strain
-	s->plastic_strain = glm::mat3(0.f);
+	s.plastic_strain = glm::mat3(0.f);
 
 	// Initialize masses
 	for (int i = 0; i < 4; i++) {
-		Particles[s->p_idx[i]].mass += (density * s->volume) / 4.f;
+		Particles[s.particleIdx[i]].mass += (density * s.volume) / 4.f;
 	}
 
-	Elements.push_back(*s);
-
+	return s;
 }	
 
 int PhysicsRenderer::idx3d(glm::vec3 idx) {
@@ -371,26 +314,26 @@ int PhysicsRenderer::idx3d(glm::vec3 idx) {
 
 //check if point is in tetra
 // TODO: what is the particle reference here? needs to be stripped.  
-bool PhysicsRenderer::p_in_tetra(Particle p, Simplex_3 t) {
+bool PhysicsRenderer::p_in_tetra(const Particle& p, const Tetra& t) {
 	glm::vec3 pos = p.position;
-	glm::vec3 v1 = Particles[t.p_idx[0]].position;
-	glm::vec3 v2 = Particles[t.p_idx[1]].position;
-	glm::vec3 v3 = Particles[t.p_idx[2]].position;
-	glm::vec3 v4 = Particles[t.p_idx[3]].position;
+	glm::vec3 v1 = Particles[t.particleIdx[0]].position;
+	glm::vec3 v2 = Particles[t.particleIdx[1]].position;
+	glm::vec3 v3 = Particles[t.particleIdx[2]].position;
+	glm::vec3 v4 = Particles[t.particleIdx[3]].position;
 
 	return PhysicsUtil::isSameSide(v1, v2, v3, v4, pos) && PhysicsUtil::isSameSide(v2, v3, v4, v1, pos) && PhysicsUtil::isSameSide(v3, v4, v1, v2, pos) && PhysicsUtil::isSameSide(v4, v1, v2, v3, pos);
 }
 
 // calculate centroid of simplex, repusle point away.  Coulombs law based.  Should only be used if intersection exists
-glm::vec3 PhysicsRenderer::calc_force(glm::vec3 p, Simplex_3 t) 
+glm::vec3 PhysicsRenderer::calc_force(glm::vec3 p, const Tetra& t) 
 {
 	// this will need to be adjusted
 	float force = 100000.f;
 
-	int p1 = t.p_idx[0];
-	int p2 = t.p_idx[1];
-	int p3 = t.p_idx[2];
-	int p4 = t.p_idx[3];
+	int p1 = t.particleIdx[0];
+	int p2 = t.particleIdx[1];
+	int p3 = t.particleIdx[2];
+	int p4 = t.particleIdx[3];
 
 	glm::vec3 centroid = (Particles[p1].position + Particles[p3].position + Particles[p2].position + Particles[p4].position) / 4.f;
 	float dist = glm::length(centroid - p);

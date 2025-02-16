@@ -29,5 +29,5 @@ private:
 	GLuint shaderProgram = 0;
 	GLuint VAO, VBO, EBO;
 	// TOdo unhardcode
-	int m_drawmode = 2;
+	int m_drawmode = 1; // 0 - points, 1 - lines, 2 - quads
 };

@@ -12,23 +12,26 @@
 #include <vector>
 // TODO remove this once its not needed for refactor
 #include "PhysicsUtil.h"
+#include <assert.h>
+#include <chrono>
 
+// Todo: It's possible to make the particles point directly at memory in the vertex buffer to skip updating it
 struct Particle
 {
-	glm::vec3 position;
+	glm::vec3 position = glm::vec3(0.f, 0.f, 0.f);;
 	glm::vec3 velocity = glm::vec3(0.f, 0.f, 0.f);
 	glm::vec3 force = glm::vec3(0.f,0.f,0.f);
 	float mass = 0;
 };
 
-struct Simplex_3
+// Tetrahedron consisting of 4 particles. Particles are NOT exclusive to one Simplex
+struct Tetra
 {
-	int p_idx[4];
 	glm::mat3 t0inv;
 	glm::mat3 strain, plastic_strain;
+	glm::ivec4 particleIdx; // Vector of 4 indices into the Particle vector, the 4 componenent Particles
 	glm::vec3 n1, n2, n3, n4;
 	float volume;
-
 };
 
 class PhysicsRenderer : public Renderer
@@ -49,7 +52,7 @@ private:
 	float timestep = 1.f / 18000.f;
 	
 	bool enableDamping = false;
-	bool enableCollision = false;
+	bool enableCollision = false; // Runs glacially right now, needs to be disabled until better collision detection is implemented
 	bool plasticDeformation = true;
 	float dampingFactor = .99997f;
 	
@@ -73,14 +76,13 @@ private:
 	float edgelength = 1;
 
 	std::vector<Particle> Particles;
-	std::vector<Simplex_3> Elements;
+	std::vector<Tetra> Elements;
 	std::vector<glm::vec3> vertices;
 	std::vector<glm::vec3> indices;
-	int drawmode = 2; // 0 - points, 1 - lines, 2 - quads
 
-	bool p_in_tetra(Particle p, Simplex_3 t);
+	bool p_in_tetra(const Particle& p, const Tetra& t);
 
-	glm::vec3 calc_force(glm::vec3 p, Simplex_3 t);
+	glm::vec3 calc_force(glm::vec3 p, const Tetra& t);
 
 
 public:
@@ -99,13 +101,9 @@ public:
 
 	void genMesh(glm::vec3 startpos, int w, int h, int d);
 
-	void add_test_tetra(glm::vec3 startpos, float scale);
-
-	void add_test_cube(glm::vec3 startpos, float scale);
-
 	void add_cube(glm::vec3 topleft);
 
-	void genTetra(int p1, int p2, int p3, int p4);
+	Tetra genTetra(const glm::ivec4& indices);
 
 	int idx3d(glm::vec3 idx);
 

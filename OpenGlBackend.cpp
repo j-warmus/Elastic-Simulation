@@ -59,8 +59,8 @@ void OpenGlBackend::draw(int elems_to_draw, const glm::mat4& view, const glm::ma
 	else if (m_drawmode == 1) { glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); }
 	else { glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); }
 
+	// TODO magic
 	glDrawElements(GL_TRIANGLES, 3 * 4 * elems_to_draw, GL_UNSIGNED_INT, 0);
-	//glDrawArrays(GL_POINTS, 0, vertices.size());
 
 	// Unbind the VAO and shader program
 	glBindVertexArray(0);

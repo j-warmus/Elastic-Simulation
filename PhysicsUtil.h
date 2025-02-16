@@ -8,6 +8,7 @@ namespace PhysicsUtil {
 	// Epsilon to reduce self-intersection 
 	constexpr float ERROR_EPSILON = 00000001.f;
 
+	// Square root of the sum of the absolute squares of matrix elements
 	inline float calcFrobeniusNorm(const glm::mat3& mat){
 		float sum = 0;
 		for (int i = 0; i < 3; ++i) {
@@ -18,6 +19,8 @@ namespace PhysicsUtil {
 		return sqrt(sum);
 	}
 
+	// TODO - names suck
+	// Checks if point is on the same side of the plane defined by v1, v2, and v3 as v4
 	inline bool isSameSide(const glm::vec3& point, 
 		const glm::vec3& v1, const glm::vec3& v2, 
 		const glm::vec3& v3, const glm::vec3& v4)
