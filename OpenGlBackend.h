@@ -1,13 +1,10 @@
 #pragma once
 
-#include "main.h"
+#include <glm/glm.hpp>
 #include "RenderBackend.h"
+#include <GL/glew.h>
 #include <string>
 #include <vector>
-#include <glm/glm.hpp>
-#include <glm/gtx/transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <GL/glew.h>
 
 class OpenGlBackend : public RenderBackend
 {

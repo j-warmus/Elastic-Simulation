@@ -1,4 +1,7 @@
 #pragma once
+#include <glm/glm.hpp>
+#include <string>
+#include <vector>
 class RenderBackend
 {
 public:

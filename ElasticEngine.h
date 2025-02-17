@@ -1,7 +1,7 @@
 #pragma once
 #include "PhysicsEngine.h"
 #include "PhysicsUtil.h"
-#include "main.h"
+#include <glm/glm.hpp>
 #include <vector>
 
 
@@ -22,7 +22,7 @@ struct elasticParams {
 	bool plasticDeformation = true;
 };
 
-class ElasticEngine //: public PhysicsEngine
+class ElasticEngine : public PhysicsEngine
 {
 public:
 	ElasticEngine(elasticParams params);

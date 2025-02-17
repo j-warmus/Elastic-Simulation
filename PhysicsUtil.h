@@ -1,5 +1,6 @@
 #pragma once
-#include "main.h"
+#include <glm/glm.hpp>
+#include <cmath>
 
 namespace PhysicsUtil {
 	struct Particle

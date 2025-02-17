@@ -1,4 +1,12 @@
 #include "OpenGlBackend.h"
+#include <glm/glm.hpp>
+#include "GL/glew.h"
+#include "shader.h"
+#include <iostream>
+#include <ostream>
+#include <string>
+#include <vector>
+#include <glm/gtc/type_ptr.hpp>
 
 OpenGlBackend::OpenGlBackend(const std::vector<glm::vec3>& vertices, const std::vector<glm::ivec3>& indices)
 {

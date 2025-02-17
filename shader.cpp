@@ -1,4 +1,12 @@
+#include "GL/glew.h"
 #include "shader.h"
+#include <cstdio>
+#include <fstream>
+#include <iosfwd>
+#include <iostream>
+#include <ostream>
+#include <string>
+#include <vector>
 
 enum ShaderType { vertex, fragment };
 

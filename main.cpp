@@ -1,4 +1,7 @@
 #include "main.h"
+#include "Window.h"
+#include <cstdlib>
+#include <memory>
 
 int main(void)
 {

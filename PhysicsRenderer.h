@@ -1,20 +1,17 @@
 #pragma once
 
 
-#include "main.h"
-#include "Renderer.h"
 #include "PhysicsEngine.h"
-#include "ElasticEngine.h"
 #include "RenderBackend.h"
-#include "OpenGlBackend.h"
-#include <vector>
+#include "Renderer.h"
+#include <glm/glm.hpp>
 #include <memory>
-#include <assert.h>
+#include <vector>
 
 class PhysicsRenderer : public Renderer
 {
 private:
-	std::unique_ptr<ElasticEngine> physEngine;
+	std::unique_ptr<PhysicsEngine> physEngine;
 	std::unique_ptr<RenderBackend> renderBackend;
 
 

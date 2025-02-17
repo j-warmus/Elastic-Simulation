@@ -1,4 +1,8 @@
 #include "ElasticEngine.h"
+#include "PhysicsUtil.h"
+#include <assert.h>
+#include <glm/glm.hpp>
+#include <vector>
 
 void ElasticEngine::advancePhysicsSim(float timestep)
 {

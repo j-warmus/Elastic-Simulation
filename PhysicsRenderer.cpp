@@ -1,4 +1,10 @@
+#include "ElasticEngine.h"
+
+#include <glm/glm.hpp>
+#include "OpenGlBackend.h"
 #include "PhysicsRenderer.h"
+#include <memory>
+#include <glm/gtx/transform.hpp>
 
 PhysicsRenderer::PhysicsRenderer()
 {

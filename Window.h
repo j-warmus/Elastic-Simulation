@@ -1,11 +1,9 @@
 #pragma once
-
-#include "main.h"
-#include "shader.h"
+#include "GLFW/glfw3.h"
 #include "Renderer.h"
-#include "PhysicsRenderer.h"
+#include <glm/glm.hpp>
 #include <memory>
-#include <chrono>
+#include <string>
 
 // This should ideally be calculated off framerate
 constexpr float TIMESTEP = 1 / 10000.f;
