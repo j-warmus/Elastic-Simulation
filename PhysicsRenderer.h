@@ -13,7 +13,6 @@
 // TODO remove this once its not needed for refactor
 #include "PhysicsUtil.h"
 #include <assert.h>
-#include <chrono>
 
 // Todo: It's possible to make the particles point directly at memory in the vertex buffer to skip updating it
 struct Particle
@@ -27,8 +26,8 @@ struct Particle
 // Tetrahedron consisting of 4 particles. Particles are NOT exclusive to one Simplex
 struct Tetra
 {
-	glm::mat3 t0inv;
-	glm::mat3 strain, plastic_strain;
+	glm::mat3 t0inv; // TODO figure out what this actually does
+	glm::mat3 strain, plasticStrain;
 	glm::ivec4 particleIdx; // Vector of 4 indices into the Particle vector, the 4 componenent Particles
 	glm::vec3 n1, n2, n3, n4;
 	float volume;
@@ -46,15 +45,11 @@ private:
 
 	int m_width;
 	int m_height;
-
-	//fps
-	// TODO: demagic this
-	float timestep = 1.f / 18000.f;
 	
-	bool enableDamping = false;
+	bool enableDamping = true;
 	bool enableCollision = false; // Runs glacially right now, needs to be disabled until better collision detection is implemented
 	bool plasticDeformation = true;
-	float dampingFactor = .99997f;
+	float dampingFactor = 1.f;
 	
 	// parameters
 	float density = 1000;
@@ -90,11 +85,8 @@ public:
 	PhysicsRenderer();
 	~PhysicsRenderer();
 
-	// TODO: this HAS to be generic, for now use derived for testing
-	
-
-	void draw(const glm::mat4& view, const glm::mat4& projection, GLuint shader) override;
-	void update() override;
+	void draw(const glm::mat4& view, const glm::mat4& projection) override;
+	void update(float timestep) override;
 	void setViewDimensions(int width, int height);
 
 	void update_buffer();
@@ -105,11 +97,7 @@ public:
 
 	Tetra genTetra(const glm::ivec4& indices);
 
-	int idx3d(glm::vec3 idx);
-
-	int get_timestep() { return timestep; };
-
-	
+	int idx3d(glm::vec3 idx);	
 };
 
 

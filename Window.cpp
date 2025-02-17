@@ -96,11 +96,8 @@ void Window::resizeCallback(GLFWwindow* window, int width, int height)
 
 void Window::update() const
 {
-	// TODO: make this actually run at a stable framerate
-	// Perform any necessary updates here 
-	for (int i = 0; i < 300; i++) {
-		curRenderer->update();
-	}
+	// Perform updates. TODO: base this on framerate
+	curRenderer->update(1/10000.f);
 }
 
 void Window::display()
@@ -112,7 +109,8 @@ void Window::display()
 	}
 	
 	// Render the objects
-	curRenderer->draw(m_view, m_projection, shaderProgram);
+	curRenderer->draw(m_view, m_projection);
+
 
 	// Gets events, including input such as keyboard and mouse or window resizing
 	glfwPollEvents();
@@ -166,14 +164,37 @@ void Window::setupCallbacks() const
 
 void Window::displayLoop()
 {
+	auto t0 = std::chrono::high_resolution_clock::now();
+
 	// Loop while GLFW window should stay open.
 	while (!glfwWindowShouldClose(m_glfwWindow))
 	{
-		// Call renderer draw
-		display();
+		if (m_enableTiming) {
+			// Times display callback, prints to cout every 500 ms.
+			auto t2 = std::chrono::high_resolution_clock::now();
 
-		// Idle callback. Updating objects, etc. can be done here. (Update)
-		update();
+			// Call renderer draw
+			display();
+			// Idle callback. Updating objects, etc. can be done here. (Update)
+			update();
+
+			if (std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t0).count() > 500.f) {
+				auto t1 = std::chrono::high_resolution_clock::now();
+				t0 = t1;
+				std::cout << "Display and update callbacks took "
+					<< std::chrono::duration_cast<std::chrono::microseconds>(t1 - t2).count()
+					<< "microseconds\n";
+			}
+
+		}
+		else {
+			// Call renderer draw
+			display();
+			// Idle callback. Updating objects, etc. can be done here. (Update)
+			update();
+		}
+
+
 	}
 }
 

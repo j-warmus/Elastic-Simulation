@@ -5,6 +5,7 @@
 #include "Renderer.h"
 #include "PhysicsRenderer.h"
 #include <memory>
+#include <chrono>
 
 class Window
 {
@@ -17,6 +18,7 @@ public:
 	int m_height;
 	const std::string m_windowTitle;
 	bool m_resizeFlag = false;
+	bool m_enableTiming = true;
 
 
 	// Camera Matrices
@@ -26,9 +28,6 @@ public:
 	glm::vec3 m_eyePos		= glm::vec3{0, 0, 20};
 	glm::vec3 m_lookAtPoint	= glm::vec3{0, 0, 0};
 	glm::vec3 m_upVector	= glm::vec3{0, 1, 0};;
-
-	// Shader Program ID
-	GLuint shaderProgram;
 
 	// Main loop
 	void displayLoop();

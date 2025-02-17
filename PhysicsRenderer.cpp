@@ -56,7 +56,7 @@ PhysicsRenderer::~PhysicsRenderer()
 {
 }
 
-void PhysicsRenderer::draw(const glm::mat4& view, const glm::mat4& projection, GLuint shader)
+void PhysicsRenderer::draw(const glm::mat4& view, const glm::mat4& projection)
 {
 	// update vertex positions
 	update_buffer();
@@ -65,11 +65,8 @@ void PhysicsRenderer::draw(const glm::mat4& view, const glm::mat4& projection, G
 }
 
 // Todo: this is parallelizable but nontrivially.  Need to ensure particle force update is atomic
-void PhysicsRenderer::update()
+void PhysicsRenderer::update(float timestep)
 {
-	// update elements
-	auto t1 = std::chrono::high_resolution_clock::now();
-
 	for (auto& e : Elements) {
 		int p1, p2, p3, p4;
 		glm::vec3 r1, r2, r3, r4;
@@ -93,7 +90,7 @@ void PhysicsRenderer::update()
 		glm::mat3 F = T * e.t0inv;
 
 		glm::mat3 total_strain = .5f * (glm::transpose(F) * F - glm::mat3(1.f));
-		glm::mat3 elastic_strain = total_strain - e.plastic_strain;
+		glm::mat3 elastic_strain = total_strain - e.plasticStrain;
 		// plastic deformation occurs here
 		if (plasticDeformation) {
 			float e_trace = elastic_strain[0][0] + elastic_strain[1][1] + elastic_strain[2][2];
@@ -104,7 +101,7 @@ void PhysicsRenderer::update()
 			glm::mat3 d_plastic = glm::mat3(0.f);
 			if (mag_de_strain > elastic_limit) {
 				d_plastic = ((mag_de_strain - elastic_limit) / mag_de_strain) * d_elastic_strain;
-				e.plastic_strain = (e.plastic_strain + d_plastic) * fminf(1.f, plastic_limit / PhysicsUtil::calcFrobeniusNorm(e.plastic_strain + d_plastic));
+				e.plasticStrain = (e.plasticStrain + d_plastic) * fminf(1.f, plastic_limit / PhysicsUtil::calcFrobeniusNorm(e.plasticStrain + d_plastic));
 
 			}
 		}
@@ -112,7 +109,6 @@ void PhysicsRenderer::update()
 		float lame1 = (youngs * poisson) / ((1.f + poisson) * (1.f - 2.f * poisson));
 		float lame2 = youngs / (2.f * (1.f + poisson));
 		float trace = strain[0][0] + strain[1][1] + strain[2][2];
-
 
 
 		glm::mat3 cauchy;
@@ -171,11 +167,6 @@ void PhysicsRenderer::update()
 		}
 
 	}
-
-	auto t2 = std::chrono::high_resolution_clock::now();
-	std::cout << "Simulation took "
-		<< std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count()
-		<< "microseconds\n";
 
 }
 
@@ -298,7 +289,7 @@ Tetra PhysicsRenderer::genTetra(const glm::ivec4& indices)
 	s.n4 = .5f * glm::cross(r2 - r1, r3 - r1);
 	
 	// Initialize plastic strain
-	s.plastic_strain = glm::mat3(0.f);
+	s.plasticStrain = glm::mat3(0.f);
 
 	// Initialize masses
 	for (int i = 0; i < 4; i++) {
