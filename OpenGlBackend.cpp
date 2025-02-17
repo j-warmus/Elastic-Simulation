@@ -60,7 +60,7 @@ void OpenGlBackend::draw(int elems_to_draw, const glm::mat4& view, const glm::ma
 	else { glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); }
 
 	// TODO magic
-	glDrawElements(GL_TRIANGLES, 3 * 4 * elems_to_draw, GL_UNSIGNED_INT, 0);
+	glDrawElements(GL_TRIANGLES, 3 * elems_to_draw, GL_UNSIGNED_INT, 0);
 
 	// Unbind the VAO and shader program
 	glBindVertexArray(0);

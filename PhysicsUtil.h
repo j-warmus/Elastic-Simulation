@@ -1,10 +1,24 @@
 #pragma once
-#include <glm/glm.hpp>
-#include <glm/gtx/transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <GL/glew.h>
+#include "main.h"
 
 namespace PhysicsUtil {
+	struct Particle
+	{
+		glm::vec3 position = glm::vec3(0.f, 0.f, 0.f);;
+		glm::vec3 velocity = glm::vec3(0.f, 0.f, 0.f);
+		glm::vec3 force = glm::vec3(0.f, 0.f, 0.f);
+		float mass = 0;
+	};
+	// Tetrahedron consisting of 4 particles. Particles are NOT exclusive to one Simplex
+	struct Tetra
+	{
+		glm::mat3 t0inv; // TODO figure out what this actually does
+		glm::mat3 strain, plasticStrain;
+		glm::ivec4 particleIdx; // Vector of 4 indices into the Particle vector, the 4 componenent Particles
+		glm::vec3 n1, n2, n3, n4;
+		float volume;
+	};
+
 	// Epsilon to reduce self-intersection 
 	constexpr float ERROR_EPSILON = 00000001.f;
 
