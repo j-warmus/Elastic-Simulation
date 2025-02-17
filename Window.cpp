@@ -96,8 +96,12 @@ void Window::resizeCallback(GLFWwindow* window, int width, int height)
 
 void Window::update() const
 {
-	// Perform updates. TODO: base this on framerate
-	curRenderer->update(1/10000.f);
+	// Perform updates. Multiple updates per frame helps with stability
+	// TODO: Timestep should be 
+	for (int i = 0; i < m_updatesPerFrame; ++i) {
+		curRenderer->update(TIMESTEP);
+	}
+	
 }
 
 void Window::display()

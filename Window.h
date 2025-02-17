@@ -7,11 +7,15 @@
 #include <memory>
 #include <chrono>
 
+// This should ideally be calculated off framerate
+constexpr float TIMESTEP = 1 / 10000.f;
+
 class Window
 {
 public:
 	// Renderer Object
 	std::unique_ptr<Renderer> curRenderer;
+	int m_updatesPerFrame = 100;
 
 	// Window Properties
 	int m_width;

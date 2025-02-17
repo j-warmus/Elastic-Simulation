@@ -4,10 +4,6 @@
 #include "main.h"
 #include "RenderBackend.h"
 #include "OpenGlBackend.h"
-#include <glm/glm.hpp>
-#include <glm/gtx/transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <GL/glew.h>
 #include <memory>
 #include <vector>
 // TODO remove this once its not needed for refactor
