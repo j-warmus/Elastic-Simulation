@@ -6,9 +6,9 @@
 
 // Both these structs have default values that produce a good result to start
 struct elasticParams {
-	float density = 1000;
+	float density = 1000.f;
 	float gravity = -9.8f;
-	float youngs = 2500000;
+	float youngs = 2500000.f;
 	float poisson = 0.25;
 
 	float groundPlane = -3.0f;

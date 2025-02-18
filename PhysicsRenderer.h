@@ -5,6 +5,7 @@
 #include "RenderBackend.h"
 #include "Renderer.h"
 #include <glm/glm.hpp>
+#include <glm/gtx/transform.hpp>
 #include <memory>
 #include <vector>
 
@@ -24,11 +25,8 @@ private:
 	std::unique_ptr<IPhysicsEngine> m_physicsEngine;
 	std::unique_ptr<IRenderBackend> m_renderBackend;
 
-	// TODO verify these
-	glm::mat4 m_model;
-	glm::vec3 m_color;
-	glm::mat4 m_view;
-	glm::mat4 m_projection;
+	glm::mat4 m_model = glm::scale(glm::vec3(2.f));;
+	glm::vec3 m_color = glm::vec3(1.0f, 1.0f, 1.0f);
 
 	int m_width;
 	int m_height;

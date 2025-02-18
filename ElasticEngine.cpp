@@ -7,6 +7,7 @@
 void ElasticEngine::advancePhysicsSim(const float timestep)
 {
 	for (auto& tetra : m_tetraVec) {
+
 		PhysicsUtil::Particle& p1 = m_particleVec[tetra.particleIdx[0]];
 		PhysicsUtil::Particle& p2 = m_particleVec[tetra.particleIdx[1]];
 		PhysicsUtil::Particle& p3 = m_particleVec[tetra.particleIdx[2]];

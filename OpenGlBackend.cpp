@@ -45,7 +45,7 @@ void OpenGlBackend::initBuffers(const std::vector<glm::vec3>& vertices, const st
 	glBindVertexArray(0);
 }
 
-void OpenGlBackend::draw(int elems_to_draw, const glm::mat4& view, const glm::mat4& projection, const glm::mat4& model, const glm::vec3& color)
+void OpenGlBackend::draw(const int elems_to_draw, const glm::mat4& view, const glm::mat4& projection, const glm::mat4& model, const glm::vec3& color) const
 {
 	// Clear the color and depth buffers
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -129,7 +129,7 @@ void OpenGlBackend::updateVertexBuffer(const std::vector<glm::vec3>& vertices) c
 	glBindVertexArray(0);
 }
 
-void OpenGlBackend::updateViewport(int width, int height)
+void OpenGlBackend::updateViewport(const int width, const int height)
 {
 	glViewport(0, 0, width, height);
 }

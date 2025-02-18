@@ -14,10 +14,10 @@ public:
 	~OpenGlBackend();
 
 	void initBuffers(const std::vector<glm::vec3>& vertices, const std::vector<glm::ivec3>& indices);
-	void draw(int elems_to_draw, const glm::mat4& view, const glm::mat4& projection, const glm::mat4& model, const glm::vec3& color) override;
-	bool initializeShadersFromFile(const std::string& vertexShaderPath, const std::string& fragShaderPath);
+	void draw(const int elems_to_draw, const glm::mat4& view, const glm::mat4& projection, const glm::mat4& model, const glm::vec3& color) const override;
 	void updateVertexBuffer(const std::vector<glm::vec3>& vertices) const override;
-	void updateViewport(int width, int height);
+	void updateViewport(const int width, const int height) override;
+	bool initializeShadersFromFile(const std::string& vertexShaderPath, const std::string& fragShaderPath);
 
 private:
 	void setOpenGlSettings() const;

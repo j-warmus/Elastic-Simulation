@@ -3,17 +3,11 @@
 #include "PhysicsRenderer.h"
 #include "RenderBackend.h"
 #include <glm/glm.hpp>
-#include <glm/gtx/transform.hpp>
 #include <memory>
 
 PhysicsRenderer::PhysicsRenderer(std::unique_ptr<IPhysicsEngine>&& physicsEngine, std::unique_ptr<IRenderBackend>&& renderBackend)
 	: m_physicsEngine(std::move(physicsEngine)), m_renderBackend(std::move(renderBackend))
 {
-	// TODO remove these
-	m_model = glm::scale(glm::vec3(2.f));
-
-	m_color = glm::vec3(1.0f, 1.0f, 1.0f);
-
 	m_vertices = m_physicsEngine->genVertices();
 	m_indices = m_physicsEngine->genIndices();
 

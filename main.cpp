@@ -13,7 +13,13 @@ int main(void)
 
 	// Set simulation parameters here
 	elasticParams elasticParameters;
+	//elasticParameters.elasticLimit = 0.008f;
+	//elasticParameters.plasticLimit = .5f;
+	//elasticParameters.plasticDeformation = false;
+
 	cubeParams cubeParameters;
+	cubeParameters.height = cubeParameters.width = cubeParameters.depth = 7;
+	cubeParameters.edgelength = .9f;
 
 	// Physics Engine Setup
 	std::unique_ptr<ElasticEngine> engine{ std::make_unique<ElasticEngine>(elasticParameters, cubeParameters) };
