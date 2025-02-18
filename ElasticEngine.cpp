@@ -7,23 +7,19 @@
 void ElasticEngine::advancePhysicsSim(const float timestep)
 {
 	for (auto& tetra : m_tetraVec) {
-		int p1, p2, p3, p4;
-		glm::vec3 r1, r2, r3, r4;
-		glm::vec3 e1, e2, e3;
+		PhysicsUtil::Particle& p1 = m_particleVec[tetra.particleIdx[0]];
+		PhysicsUtil::Particle& p2 = m_particleVec[tetra.particleIdx[1]];
+		PhysicsUtil::Particle& p3 = m_particleVec[tetra.particleIdx[2]];
+		PhysicsUtil::Particle& p4 = m_particleVec[tetra.particleIdx[3]];
 
-		p1 = tetra.particleIdx[0];
-		p2 = tetra.particleIdx[1];
-		p3 = tetra.particleIdx[2];
-		p4 = tetra.particleIdx[3];
+		const glm::vec3 r1 = p1.position;
+		const glm::vec3 r2 = p2.position;
+		const glm::vec3 r3 = p3.position;
+		const glm::vec3 r4 = p4.position;
 
-		r1 = m_particleVec[p1].position;
-		r2 = m_particleVec[p2].position;
-		r3 = m_particleVec[p3].position;
-		r4 = m_particleVec[p4].position;
-
-		e1 = r1 - r4;
-		e2 = r2 - r4;
-		e3 = r3 - r4;
+		const glm::vec3 e1 = r1 - r4;
+		const glm::vec3 e2 = r2 - r4;
+		const glm::vec3 e3 = r3 - r4;
 
 		const glm::mat3 T = glm::mat3(e1, e2, e3);
 		const glm::mat3 deformationGradient = T * tetra.inverseInitialT;
@@ -57,10 +53,10 @@ void ElasticEngine::advancePhysicsSim(const float timestep)
 		const glm::mat3 cauchy = 2.f * lame2 * elasticStrain + lame1 * elasticTrace * glm::mat3(1.f);
 
 		// Elastic force = deformation gradient * potential energy (1st Piola-Kirchoff tensor)
-		m_particleVec[p1].force += deformationGradient * cauchy * tetra.n1;
-		m_particleVec[p2].force += deformationGradient * cauchy * tetra.n2;
-		m_particleVec[p3].force += deformationGradient * cauchy * tetra.n3;
-		m_particleVec[p4].force += deformationGradient * cauchy * tetra.n4;
+		p1.force += deformationGradient * cauchy * tetra.n1;
+		p2.force += deformationGradient * cauchy * tetra.n2;
+		p3.force += deformationGradient * cauchy * tetra.n3;
+		p4.force += deformationGradient * cauchy * tetra.n4;
 	}
 
 	// Time integrate particles
