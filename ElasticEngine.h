@@ -22,26 +22,23 @@ struct elasticParams {
 	bool plasticDeformation = true;
 };
 
-class ElasticEngine : public PhysicsEngine
+class ElasticEngine : public IPhysicsEngine
 {
 public:
 	ElasticEngine(elasticParams params);
 	~ElasticEngine();
 
-	// Fills particle and tetra vecs, must be called before calling advancePhysicsSim
-	// The whole sequence is kind of arcane but I want to implement a more general model loading solution so I'll leave as is
-	// Generates a w x h x d cube centered on startpos. Each particle is edgelength apart.
-	void generateCubeGeometry(glm::vec3 startpos, 
-		unsigned int width, unsigned int height, unsigned int depth, float edgelength);
 	void advancePhysicsSim(float timestep);
 
 	// Generate vertex or index vector for usage by renderer
 	std::vector<glm::vec3> genVertices() const;
 	std::vector<glm::ivec3> genIndices() const;
 
-	//// These might go unused
-	//const std::vector<PhysicsUtil::Particle>& getParticleVec() const { return particleVec; }
-	//const std::vector<PhysicsUtil::Tetra>& getTetraVec() const { return tetraVec; }
+	// Fills particle and tetra vecs, must be called before calling advancePhysicsSim
+	// The whole sequence is kind of arcane but I want to implement a more general model loading solution so I'll leave as is
+	// Generates a w x h x d cube centered on startpos. Each particle is edgelength apart.
+	void generateCubeGeometry(glm::vec3 startpos,
+		unsigned int width, unsigned int height, unsigned int depth, float edgelength);
 
 private:
 	std::vector<PhysicsUtil::Particle> particleVec;

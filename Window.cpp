@@ -12,19 +12,15 @@
 #include <glm/ext/matrix_clip_space.hpp>
 
 
-//TODO all error code needs look.
-Window::Window() : Window(1200, 1200, "GLFW Window"){}
-
-Window::Window(const int width, const int height, const std::string& title) 
-	: m_width(width), m_height(height), m_windowTitle(title) 
+//TODO consistent error handling
+Window::Window(const int width, const int height, const std::string title)
+	: m_width(width), m_height(height), m_windowTitle(title)
 {
-	// Create GLFW window object
+	// Create GLFW window object.  Renderer has to be initialized after this due to GLEW and GLFW global state.
 	if (!createWindow(m_width, m_height)) exit(EXIT_FAILURE);
 
 	// Setup callbacks.
 	setupCallbacks();
-
-	curRenderer = std::make_unique<PhysicsRenderer>();
 
 	// View Matrix:
 	m_view = glm::lookAt(m_eyePos, m_lookAtPoint, m_upVector);
@@ -179,6 +175,8 @@ void Window::setupCallbacks() const
 
 void Window::displayLoop()
 {
+	if (!curRenderer) exit(EXIT_FAILURE);
+
 	auto t0 = std::chrono::high_resolution_clock::now();
 
 	// Loop while GLFW window should stay open.
@@ -211,6 +209,11 @@ void Window::displayLoop()
 
 
 	}
+}
+
+void Window::setRenderer(std::unique_ptr<IRenderer>&& renderer)
+{
+	curRenderer = std::move(renderer);
 }
 
 Window::~Window() {

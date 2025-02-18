@@ -11,8 +11,7 @@ constexpr float TIMESTEP = 1 / 10000.f;
 class Window
 {
 public:
-	// Renderer Object
-	std::unique_ptr<Renderer> curRenderer;
+	
 	int m_updatesPerFrame = 100;
 
 	// Window Properties
@@ -33,15 +32,15 @@ public:
 
 	// Main loop
 	void displayLoop();
+	// Must be called before display loop
+	void setRenderer(std::unique_ptr<IRenderer>&& renderer);
 
 	// Constructors and Destructors
-	Window();
-	Window(const int width, const int height, const std::string& title);
+	Window(const int width, const int height, const std::string title);
 	// Todo impelment Window(eyepos, lookat, up, const int width, const int height, )
 	~Window();
 
-	// Generates m_glfwWindow, returns error code
-	bool createWindow(int width, int height);
+
 
 	// Draw and Update renderer
 	void update() const;
@@ -56,7 +55,14 @@ public:
 private:
 	// Raw pointer necessary due to opaque GLFWwindow struct
 	GLFWwindow* m_glfwWindow;
+
+	// Generates m_glfwWindow, returns error code
+	bool createWindow(int width, int height);
+
 	void setupCallbacks() const;
+
+	// Renderer Object
+	std::unique_ptr<IRenderer> curRenderer;
 	
 };
 

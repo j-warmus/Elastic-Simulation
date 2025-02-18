@@ -8,11 +8,14 @@
 #include <vector>
 #include <glm/gtc/type_ptr.hpp>
 
-OpenGlBackend::OpenGlBackend(const std::vector<glm::vec3>& vertices, const std::vector<glm::ivec3>& indices)
+OpenGlBackend::OpenGlBackend()
 {
 	setOpenGlSettings();
 	printVersionInfo();
+}
 
+void OpenGlBackend::initBuffers(const std::vector<glm::vec3>& vertices, const std::vector<glm::ivec3>& indices)
+{
 	// Generate a vertex array (VAO) and vertex buffer object (VBO).
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);

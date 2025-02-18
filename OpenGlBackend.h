@@ -6,14 +6,15 @@
 #include <string>
 #include <vector>
 
-class OpenGlBackend : public RenderBackend
+// Must be initialized after Window object due to unfortunate GLFW and GLEW state dependency
+class OpenGlBackend : public IRenderBackend
 {
 public:
 	// TODO: probably should maintain it's own vertices and indices
-	OpenGlBackend(const std::vector<glm::vec3>& vertices, const std::vector<glm::ivec3>& indices);
-	//OpenGlBackend();
+	OpenGlBackend();
+
+	void initBuffers(const std::vector<glm::vec3>& vertices, const std::vector<glm::ivec3>& indices);
 	~OpenGlBackend();
-	//// TODO try catch here
 	void draw(int elems_to_draw, const glm::mat4& view, const glm::mat4& projection, const glm::mat4& model, const glm::vec3& color) override;
 	bool initializeShadersFromFile(const std::string& vertexShaderPath, const std::string& fragShaderPath) override;
 	void updateVertexBuffer(const std::vector<glm::vec3>& vertices) const override;
@@ -25,6 +26,6 @@ private:
 
 	GLuint shaderProgram = 0;
 	GLuint VAO, VBO, EBO;
-	// TOdo unhardcode
+
 	int m_drawmode = 1; // 0 - points, 1 - lines, 2 - quads
 };

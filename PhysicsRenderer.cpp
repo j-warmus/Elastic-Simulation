@@ -1,10 +1,9 @@
 #include "ElasticEngine.h"
-
-#include <glm/glm.hpp>
 #include "OpenGlBackend.h"
 #include "PhysicsRenderer.h"
-#include <memory>
+#include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
+#include <memory>
 
 PhysicsRenderer::PhysicsRenderer()
 {
@@ -23,7 +22,8 @@ PhysicsRenderer::PhysicsRenderer()
 	indices = physEngine->genIndices();
 
 	// TODO this has to reflect the new values from the physics engine
-	renderBackend = std::make_unique<OpenGlBackend>(vertices,indices);
+	renderBackend = std::make_unique<OpenGlBackend>();
+	renderBackend->initBuffers(vertices, indices);
 	// TODO unhardcode this
 	renderBackend->initializeShadersFromFile("shaders/shader.vert", "shaders/shader.frag");
 }

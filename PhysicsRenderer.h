@@ -8,11 +8,22 @@
 #include <memory>
 #include <vector>
 
-class PhysicsRenderer : public Renderer
+class PhysicsRenderer : public IRenderer
 {
+public:
+
+	PhysicsRenderer();
+	~PhysicsRenderer();
+
+	void draw(const glm::mat4& view, const glm::mat4& projection) override;
+	void update(float timestep) override;
+	void setViewDimensions(int width, int height);
+
+	void update_buffer();
+
 private:
-	std::unique_ptr<PhysicsEngine> physEngine;
-	std::unique_ptr<RenderBackend> renderBackend;
+	std::unique_ptr<IPhysicsEngine> physEngine;
+	std::unique_ptr<IRenderBackend> renderBackend;
 
 
 	glm::mat4 m_model;
@@ -38,26 +49,6 @@ private:
 	//bool p_in_tetra(const Particle& p, const PhysicsUtil::PhysicsUtil::Tetra& t);
 
 	//glm::vec3 calc_force(glm::vec3 p, const PhysicsUtil::PhysicsUtil::Tetra& t);
-
-
-public:
-
-	PhysicsRenderer();
-	~PhysicsRenderer();
-
-	void draw(const glm::mat4& view, const glm::mat4& projection) override;
-	void update(float timestep) override;
-	void setViewDimensions(int width, int height);
-
-	void update_buffer();
-
-	//void genMesh(glm::vec3 startpos, int w, int h, int d);
-
-	//void add_cube(glm::vec3 topleft);
-
-	//PhysicsUtil::PhysicsUtil::Tetra genTetra(const glm::ivec4& indices);
-
-	//int idx3d(glm::vec3 idx);	
 };
 
 
