@@ -77,29 +77,14 @@ void ElasticEngine::advancePhysicsSim(float timestep)
 		particleVec[p2].force += F * cauchy * tetra.n2;
 		particleVec[p3].force += F * cauchy * tetra.n3;
 		particleVec[p4].force += F * cauchy * tetra.n4;
-
-		//if (parameters.	enableCollision) {
-		//	for (auto& other_e : Elements) {
-		//		for (int i = 0; i < 4; ++i) {
-		//			auto i_vtx = e.particleIdx[i];
-		//			if (p_in_tetra(Particles[i_vtx], other_e)) {
-		//				glm::vec3 force = calc_force(Particles[i_vtx].position, other_e);
-		//				Particles[i_vtx].force += force;
-		//			}
-		//		}
-		//	}
-		//}
-
 	}
 
 	// update particles
 	for (auto& p : particleVec) {
 		p.velocity += (timestep / p.mass) * p.force;
 		p.velocity.y += timestep * parameters.gravity;
-		// TODO is this supposed to be before??
 		p.position += timestep * p.velocity;
 		p.force = glm::vec3(0.f, 0.f, 0.f);
-		// p.velocity *= dampingFactor;
 
 		if (p.position.y < parameters.groundPlane) {
 			p.position.y = parameters.groundPlane;

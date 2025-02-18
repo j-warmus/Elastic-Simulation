@@ -18,7 +18,6 @@ struct elasticParams {
 	float plastic_limit = 0.2f;
 
 	bool enableDamping = true;
-	bool enableCollision = false; // Runs glacially right now, needs to be disabled until better collision detection is implemented
 	bool plasticDeformation = true;
 };
 
