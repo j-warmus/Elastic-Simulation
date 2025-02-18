@@ -14,8 +14,8 @@ struct elasticParams {
 	float groundPlane = -3.0f;
 	float dampingFactor = 1.f;
 
-	float elastic_limit = 0.001f;
-	float plastic_limit = 0.2f;
+	float elasticLimit = 0.001f;
+	float plasticLimit = 0.2f;
 
 	bool enableDamping = true;
 	bool plasticDeformation = true;
@@ -33,15 +33,14 @@ struct cubeParams {
 class ElasticEngine : public IPhysicsEngine
 {
 public:
-	ElasticEngine() {};
-	ElasticEngine(elasticParams params, cubeParams cubeParameters);
+	ElasticEngine(elasticParams params = {}, cubeParams cubeParameters = {});
 	~ElasticEngine() {};
 
-	void advancePhysicsSim(float timestep);
+	void advancePhysicsSim(const float timestep) override;
 
 	// Generate vertex or index vector for usage by renderer
-	std::vector<glm::vec3> genVertices() const;
-	std::vector<glm::ivec3> genIndices() const;
+	std::vector<glm::vec3> genVertices() const override;
+	std::vector<glm::ivec3> genIndices() const override;
 
 	// Fills particle and tetra vecs, must be called before calling advancePhysicsSim
 	// The whole sequence is kind of arcane but I want to implement a more general model loading solution so I'll leave as is
@@ -55,6 +54,6 @@ private:
 	cubeParams m_cubeParams;
 
 	// helper function for generateCubeGeometry, generates 5 tetras from each 8-particle cube, starting with particle at given index
-	void cubeToTetras(glm::ivec3 startParticleIndex);
+	void cubeToTetras(const glm::ivec3 startParticleIndex);
 };
 

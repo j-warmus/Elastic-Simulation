@@ -20,7 +20,7 @@ namespace PhysicsUtil {
 		float volume;
 	};
 
-	// Epsilon to reduce self-intersection 
+	// Epsilon to mitigate self-intersection 
 	constexpr float ERROR_EPSILON = 00000001.f;
 
 	// Square root of the sum of the absolute squares of matrix elements

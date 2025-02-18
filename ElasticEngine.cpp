@@ -4,7 +4,7 @@
 #include <glm/glm.hpp>
 #include <vector>
 
-void ElasticEngine::advancePhysicsSim(float timestep)
+void ElasticEngine::advancePhysicsSim(const float timestep)
 {
 	for (auto& tetra : m_tetraVec) {
 		int p1, p2, p3, p4;
@@ -26,25 +26,25 @@ void ElasticEngine::advancePhysicsSim(float timestep)
 		e3 = r3 - r4;
 
 		glm::mat3 T = glm::mat3(e1, e2, e3);
-		glm::mat3 F = T * tetra.t0inv;
+		glm::mat3 deformationGradient = T * tetra.t0inv;
 
-		glm::mat3 total_strain = .5f * (glm::transpose(F) * F - glm::mat3(1.f));
-		glm::mat3 elastic_strain = total_strain - tetra.plasticStrain;
+		glm::mat3 totalStrain = .5f * (glm::transpose(deformationGradient) * deformationGradient - glm::mat3(1.f));
+		glm::mat3 elasticStrain = totalStrain - tetra.plasticStrain;
 	
 		if (m_elasticParams.plasticDeformation) {
-			float e_trace = elastic_strain[0][0] + elastic_strain[1][1] + elastic_strain[2][2];
-			glm::mat3 d_elastic_strain = elastic_strain - e_trace / 3.f * glm::mat3(1.f);
+			float elasticTrace = elasticStrain[0][0] + elasticStrain[1][1] + elasticStrain[2][2];
+			glm::mat3 dElasticStrain = elasticStrain - elasticTrace / 3.f * glm::mat3(1.f);
 
-			float mag_de_strain = PhysicsUtil::calcFrobeniusNorm(d_elastic_strain);
+			float magnitude_dElasticStrain = PhysicsUtil::calcFrobeniusNorm(dElasticStrain);
 
-			glm::mat3 d_plastic = glm::mat3(0.f);
-			if (mag_de_strain > m_elasticParams.elastic_limit) {
-				d_plastic = ((mag_de_strain - m_elasticParams.elastic_limit) / mag_de_strain) * d_elastic_strain;
-				tetra.plasticStrain = (tetra.plasticStrain + d_plastic) * fminf(1.f, m_elasticParams.plastic_limit / PhysicsUtil::calcFrobeniusNorm(tetra.plasticStrain + d_plastic));
+			glm::mat3 dPlasticStrain = glm::mat3(0.f);
+			if (magnitude_dElasticStrain > m_elasticParams.elasticLimit) {
+				dPlasticStrain = ((magnitude_dElasticStrain - m_elasticParams.elasticLimit) / magnitude_dElasticStrain) * dElasticStrain;
+				tetra.plasticStrain = (tetra.plasticStrain + dPlasticStrain) * fminf(1.f, m_elasticParams.plasticLimit / PhysicsUtil::calcFrobeniusNorm(tetra.plasticStrain + dPlasticStrain));
 
 			}
 		}
-		glm::mat3 strain = elastic_strain;
+		glm::mat3 strain = elasticStrain;
 		float lame1 = (m_elasticParams.youngs * m_elasticParams.poisson) / ((1.f + m_elasticParams.poisson) * (1.f - 2.f * m_elasticParams.poisson));
 		float lame2 = m_elasticParams.youngs / (2.f * (1.f + m_elasticParams.poisson));
 		float trace = strain[0][0] + strain[1][1] + strain[2][2];
@@ -73,10 +73,10 @@ void ElasticEngine::advancePhysicsSim(float timestep)
 
 		}
 
-		m_particleVec[p1].force += F * cauchy * tetra.n1;
-		m_particleVec[p2].force += F * cauchy * tetra.n2;
-		m_particleVec[p3].force += F * cauchy * tetra.n3;
-		m_particleVec[p4].force += F * cauchy * tetra.n4;
+		m_particleVec[p1].force += deformationGradient * cauchy * tetra.n1;
+		m_particleVec[p2].force += deformationGradient * cauchy * tetra.n2;
+		m_particleVec[p3].force += deformationGradient * cauchy * tetra.n3;
+		m_particleVec[p4].force += deformationGradient * cauchy * tetra.n4;
 	}
 
 	// update particles
@@ -163,7 +163,7 @@ void ElasticEngine::generateCubeGeometry()
 	}
 }
 
-void ElasticEngine::cubeToTetras(glm::ivec3 startParticleIndex)
+void ElasticEngine::cubeToTetras(const glm::ivec3 startParticleIndex)
 {
 	auto& [_, height, width, depth, __] = m_cubeParams;
 /*
