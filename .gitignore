@@ -328,3 +328,6 @@ ASALocalRun/
 
 # MFractors (Xamarin productivity tool) working folder 
 .mfractor/
+/Elastic-Todo.txt
+/291-hw1.vcxproj
+/291-hw1.vcxproj.filters

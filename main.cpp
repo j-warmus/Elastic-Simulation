@@ -1,96 +1,41 @@
-#include "main.h"
-
-void error_callback(int error, const char* description)
-{
-	// Print error.
-	std::cerr << description << std::endl;
-}
-
-void setup_callbacks(GLFWwindow* window)
-{
-	// Set the error callback.
-	glfwSetErrorCallback(error_callback);
-	
-	// Set the window resize callback.
-	glfwSetWindowSizeCallback(window, Window::resizeCallback);
-
-	// Set the key callback.
-	glfwSetKeyCallback(window, Window::keyCallback);
-}
-
-void setup_opengl_settings()
-{
-	// Enable depth buffering.
-	glEnable(GL_DEPTH_TEST);
-
-	// Related to shaders and z value comparisons for the depth buffer.
-	glDepthFunc(GL_LEQUAL);
-
-	// Set polygon drawing mode to fill front and back of each polygon.
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-	// Set clear color to black.
-	glClearColor(0.0, 0.0, 0.0, 0.0);
-}
-
-void print_versions()
-{
-	// Get info of GPU and supported OpenGL version.
-	std::cout << "Renderer: " << glGetString(GL_RENDERER) << std::endl;
-	std::cout << "OpenGL version supported: " << glGetString(GL_VERSION) 
-		<< std::endl;
-
-	//If the shading language symbol is defined.
-#ifdef GL_SHADING_LANGUAGE_VERSION
-	std::cout << "Supported GLSL version is: " << 
-		glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
-#endif
-}
-
-
+#include "ElasticEngine.h"
+#include "OpenGlBackend.h"
+#include "PhysicsRenderer.h"
+#include "Window.h"
+#include <cstdlib>
+#include <memory>
+#include <type_traits>
 
 int main(void)
 {
-	// Create the GLFW window.
-	GLFWwindow* window = Window::createWindow(640, 480);
-	if (!window) 
-		exit(EXIT_FAILURE);
+	// Create the GLFW window. This has to be done first as it also initializes the OpenGl context
+	Window window(1200, 1200, "OpenGL Elastic Physics Demo");
 
-	// Print OpenGL and GLSL versions.
-	print_versions();
+	// Set simulation parameters here
+	elasticParams elasticParameters;
+	//elasticParameters.elasticLimit = 0.008f;
+	//elasticParameters.plasticLimit = .5f;
+	//elasticParameters.plasticDeformation = false;
 
-	// Setup callbacks.
-	setup_callbacks(window);
+	cubeParams cubeParameters;
+	cubeParameters.height = cubeParameters.width = cubeParameters.depth = 7;
+	cubeParameters.edgelength = .9f;
 
-	// Setup OpenGL settings.
-	setup_opengl_settings();
+	// Physics Engine Setup
+	std::unique_ptr<ElasticEngine> engine{ std::make_unique<ElasticEngine>(elasticParameters, cubeParameters) };
+	engine->generateCubeGeometry();
 
-	// Initialize the shader program; exit if initialization fails.
-	if (!Window::initializeProgram()) 
-		exit(EXIT_FAILURE);
+	// Render Backend Setup
+	std::unique_ptr<OpenGlBackend> backend{ std::make_unique<OpenGlBackend>() };
+	backend->initializeShadersFromFile("shaders/shader.vert", "shaders/shader.frag");
 
-	// Initialize objects/pointers for rendering; exit if initialization fails.
-	if (!Window::initializeObjects()) 
-		exit(EXIT_FAILURE);
-	
-	// Loop while GLFW window should stay open.
-	while (!glfwWindowShouldClose(window))
-	{
-		// Main render display callback. Rendering of objects is done here. (Draw)
-		Window::displayCallback(window);
+	// Compose into Physics Renderer
+	std::unique_ptr<PhysicsRenderer> renderer{ std::make_unique<PhysicsRenderer>(std::move(engine), std::move(backend)) };
 
-		// Idle callback. Updating objects, etc. can be done here. (Update)
-		Window::idleCallback();
-	}
+	// Attach Renderer to Window and display/run simulation
+	window.setRenderer(std::move(renderer));
 
-	// destroy objects created
-	Window::cleanUp();
-
-	// Destroy the window.
-	glfwDestroyWindow(window);
-
-	// Terminate GLFW.
-	glfwTerminate();
+	window.displayLoop();
 
 	exit(EXIT_SUCCESS);
 }

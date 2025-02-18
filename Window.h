@@ -1,51 +1,68 @@
-#ifndef _WINDOW_H_
-#define _WINDOW_H_
-
-#include "main.h"
-#include "shader.h"
-#include "Object.h"/*
-#include "Cube.h"
-#include "PointCloud.h"*/
-#include "Manager.h"
+#pragma once
+#include "GLFW/glfw3.h"
+#include "Renderer.h"
+#include <glm/glm.hpp>
 #include <memory>
+#include <string>
+
+// This should ideally be calculated off framerate
+constexpr float TIMESTEP = 1 / 10000.f;
 
 class Window
 {
 public:
+	
+	int m_updatesPerFrame = 100;
 
 	// Window Properties
-	static int width;
-	static int height;
-	static const char* windowTitle;
+	int m_width;
+	int m_height;
+	const std::string m_windowTitle;
+	bool m_resizeFlag = false;
+	bool m_enableTiming = true;
 
-	// Objects to Render
-	//static Cube* cube;
-	//static PointCloud * cubePoints;
-	static ElasticManager* manager;
 
 	// Camera Matrices
-	static glm::mat4 projection;
-	static glm::mat4 view;
-	static glm::vec3 eyePos, lookAtPoint, upVector;
+	// TODO these should probably all be part of the renderer?
+	glm::mat4 m_projection;
+	glm::mat4 m_view;
+	glm::vec3 m_eyePos		= glm::vec3{0, 0, 20};
+	glm::vec3 m_lookAtPoint	= glm::vec3{0, 0, 0};
+	glm::vec3 m_upVector	= glm::vec3{0, 1, 0};;
 
-	// Shader Program ID
-	static GLuint shaderProgram;
+	// Main loop
+	void displayLoop();
+	// Must be called before display loop
+	void setRenderer(std::unique_ptr<IRenderer>&& renderer);
 
 	// Constructors and Destructors
-	static bool initializeProgram();
-	static bool initializeObjects();
-	static void cleanUp();
+	Window(const int width, const int height, const std::string title);
+	// Todo impelment Window(eyepos, lookat, up, const int width, const int height, )
+	~Window();
 
-	// Window functions
-	static GLFWwindow* createWindow(int width, int height);
+
+
+	// Draw and Update renderer
+	void update() const;
+	void display();
+	void setDimensions(int width, int height);
+
+	// GLFW callbacks, have to be static to be used by GLFW
+	static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+	static void errorCallback(int error, const char* description);
 	static void resizeCallback(GLFWwindow* window, int width, int height);
 
-	// Draw and Update functions
-	static void idleCallback();
-	static void displayCallback(GLFWwindow*);
+private:
+	// Raw pointer necessary due to opaque GLFWwindow struct
+	GLFWwindow* m_glfwWindow;
 
-	// Callbacks
-	static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+	// Generates m_glfwWindow, returns error code
+	bool createWindow(int width, int height);
+
+	void setupCallbacks() const;
+
+	// Renderer Object
+	std::unique_ptr<IRenderer> curRenderer;
+	
 };
 
-#endif

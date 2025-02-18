@@ -1,175 +1,127 @@
+#include "GL/glew.h"
+#include "GLFW/glfw3.h"
+#include "PhysicsRenderer.h"
 #include "Window.h"
+#include <chrono>
+#include <cstdlib>
+#include <glm/glm.hpp>
+#include <iostream>
+#include <memory>
+#include <string>
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/ext/matrix_clip_space.hpp>
 
 
-// Window Properties
-int Window::width;
-int Window::height;
-const char* Window::windowTitle = "GLFW Starter Project";
-
-// Objects to Render
-//Cube * Window::cube;
-//PointCloud * Window::cubePoints;
-ElasticManager * Window::manager;
-Object* currObj;
-
-// Camera Matrices 
-// Projection matrix:
-glm::mat4 Window::projection; 
-
-// View Matrix:
-glm::vec3 Window::eyePos(0, 0, 20);			// Camera position.
-glm::vec3 Window::lookAtPoint(0, 0, 0);		// The point we are looking at.
-glm::vec3 Window::upVector(0, 1, 0);		// The up direction of the camera.
-glm::mat4 Window::view = glm::lookAt(Window::eyePos, Window::lookAtPoint, Window::upVector);
-
-// Shader Program ID
-GLuint Window::shaderProgram; 
-
-
-
-bool Window::initializeProgram() {
-	// Create a shader program with a vertex shader and a fragment shader.
-	shaderProgram = LoadShaders("shaders/shader.vert", "shaders/shader.frag");
-
-	// Check the shader program.
-	if (!shaderProgram)
-	{
-		std::cerr << "Failed to initialize shader program" << std::endl;
-		return false;
-	}
-
-	return true;
-}
-
-bool Window::initializeObjects()
+//TODO consistent error handling
+Window::Window(const int width, const int height, const std::string title)
+	: m_width(width), m_height(height), m_windowTitle(title)
 {
-	// Create a cube of size 5.
-	//cube = new Cube(5.0f);
+	// Create GLFW window object.  Renderer has to be initialized after this since it initializes OpenGl context (sadly).
+	// If I implement DirectX backend this whole class will need a look.
+	if (!createWindow(m_width, m_height)) exit(EXIT_FAILURE);
 
-	// Create a point cloud consisting of cube vertices.
-	//cubePoints = new PointCloud("foo", 100);
+	// Setup callbacks.
+	setupCallbacks();
 
-
-	manager = new ElasticManager();
-	// Set cube to be the first to display
-	currObj = manager;
-
-	return true;
+	// View Matrix:
+	m_view = glm::lookAt(m_eyePos, m_lookAtPoint, m_upVector);
 }
 
-void Window::cleanUp()
-{
-	// Deallcoate the objects.
-	delete manager;
-	//delete cubePoints;
-
-	// Delete the shader program.
-	glDeleteProgram(shaderProgram);
-}
-
-GLFWwindow* Window::createWindow(int width, int height)
+bool Window::createWindow(const int width, const int height)
 {
 	// Initialize GLFW.
 	if (!glfwInit())
 	{
 		std::cerr << "Failed to initialize GLFW" << std::endl;
-		return NULL;
+		return 0;
 	}
 
 	// 4x antialiasing.
 	glfwWindowHint(GLFW_SAMPLES, 4);
 
-#ifdef __APPLE__ 
-	// Apple implements its own version of OpenGL and requires special treatments
-	// to make it uses modern OpenGL.
-
-	// Ensure that minimum OpenGL version is 3.3
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	// Enable forward compatibility and allow a modern OpenGL context
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
-
-	// Create the GLFW window.
-	GLFWwindow* window = glfwCreateWindow(width, height, windowTitle, NULL, NULL);
+	// Create the GLFW window, set Window class as user for callbacks
+	m_glfwWindow = glfwCreateWindow(width, height, m_windowTitle.c_str(), NULL, NULL);
+	glfwSetWindowUserPointer(m_glfwWindow, static_cast<void*>(this));
 
 	// Check if the window could not be created.
-	if (!window)
+	if (!m_glfwWindow)
 	{
 		std::cerr << "Failed to open GLFW window." << std::endl;
 		glfwTerminate();
-		return NULL;
+		return 0;
 	}
 
 	// Make the context of the window.
-	glfwMakeContextCurrent(window);
-
-#ifndef __APPLE__
-	// On Windows and Linux, we need GLEW to provide modern OpenGL functionality.
+	glfwMakeContextCurrent(m_glfwWindow);
 
 	// Initialize GLEW.
 	if (glewInit())
 	{
 		std::cerr << "Failed to initialize GLEW" << std::endl;
-		return NULL;
+		return 0;
 	}
-#endif
 
 	// Set swap interval to 1.
 	glfwSwapInterval(0);
 
 	// Call the resize callback to make sure things get drawn immediately.
-	Window::resizeCallback(window, width, height);
+	Window::resizeCallback(m_glfwWindow, width, height);
 
-	return window;
+	return 1;
 }
 
 void Window::resizeCallback(GLFWwindow* window, int width, int height)
 {
-#ifdef __APPLE__
-	// In case your Mac has a retina display.
-	glfwGetFramebufferSize(window, &width, &height); 
-#endif
-	Window::width = width;
-	Window::height = height;
-	// Set the viewport size.
-	glViewport(0, 0, width, height);
+
+	Window* windowObj = static_cast<Window*>(glfwGetWindowUserPointer(window));
+	if (!windowObj) exit(EXIT_FAILURE);
+	windowObj->setDimensions(width, height);
 
 	// Set the projection matrix.
-	Window::projection = glm::perspective(glm::radians(60.0), 
-								double(width) / (double)height, 1.0, 1000.0);
+	windowObj->m_projection = glm::perspective(glm::radians(60.0), 
+								static_cast<double>(width) / 
+								static_cast<double>(height), 1.0, 1000.0);
 }
 
-void Window::idleCallback()
+void Window::update() const
 {
-	// Perform any necessary updates here 
-	for (int i = 0; i < 300; i++) {
-		currObj->update();
+	// Perform updates. Multiple updates per frame helps with stability
+	// TODO: Timestep should be 
+	for (int i = 0; i < m_updatesPerFrame; ++i) {
+		curRenderer->update(TIMESTEP);
 	}
+	
 }
 
-void Window::displayCallback(GLFWwindow* window)
+void Window::display()
 {	
-	// Clear the color and depth buffers
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	
-
+	// Resize viewport
+	if (m_resizeFlag == true){
+		curRenderer->setViewDimensions(m_width, m_height);
+		m_resizeFlag = false;
+	}
+	
 	// Render the objects
-	currObj->draw(view, projection, shaderProgram);
+	curRenderer->draw(m_view, m_projection);
+
 
 	// Gets events, including input such as keyboard and mouse or window resizing
 	glfwPollEvents();
 
 	// Swap buffers.
-	glfwSwapBuffers(window);
+	glfwSwapBuffers(m_glfwWindow);
+}
+
+void Window::setDimensions(int width, int height)
+{
+	// update dims and set flag to resize window on next display() call
+	m_height = height;
+	m_width = width;
+	m_resizeFlag = true;
 }
 
 void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-	/*
-	 * TODO: Modify below to add your key callbacks.
-	 */
-	
 	// Check for a key press.
 	if (action == GLFW_PRESS)
 	{
@@ -179,17 +131,76 @@ void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
 			// Close the window. This causes the program to also terminate.
 			glfwSetWindowShouldClose(window, GL_TRUE);				
 			break;
-
-		// switch between the cube and the cube pointCloud
-		//case GLFW_KEY_1:
-		//	currObj = cube;
-		//	break;
-		//case GLFW_KEY_2:
-		//	currObj = cubePoints;
-		//	break;
-
 		default:
 			break;
 		}
 	}
+}
+
+void Window::errorCallback(int error, const char* description)
+{
+	// Print error.
+	std::cerr << description << std::endl;
+}
+
+void Window::setupCallbacks() const
+{
+	// Set the error callback.
+	glfwSetErrorCallback(errorCallback);
+
+	// Set the window resize callback.
+	glfwSetWindowSizeCallback(m_glfwWindow, Window::resizeCallback);
+
+	// Set the key callback.
+	glfwSetKeyCallback(m_glfwWindow, Window::keyCallback);
+}
+
+void Window::displayLoop()
+{
+	if (!curRenderer) exit(EXIT_FAILURE);
+
+	auto t0 = std::chrono::high_resolution_clock::now();
+
+	// Loop while GLFW window should stay open.
+	while (!glfwWindowShouldClose(m_glfwWindow))
+	{
+		if (m_enableTiming) {
+			// Times display callback, prints to cout every 500 ms.
+			auto t2 = std::chrono::high_resolution_clock::now();
+
+			// Call renderer draw
+			display();
+			// Idle callback. Updating objects, etc. can be done here. (Update)
+			update();
+
+			if (std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t0).count() > 500.f) {
+				auto t1 = std::chrono::high_resolution_clock::now();
+				t0 = t1;
+				std::cout << "Display and update callbacks took "
+					<< std::chrono::duration_cast<std::chrono::microseconds>(t1 - t2).count()
+					<< "microseconds\n";
+			}
+
+		}
+		else {
+			// Call renderer draw
+			display();
+			// Idle callback. Updating objects, etc. can be done here. (Update)
+			update();
+		}
+
+
+	}
+}
+
+void Window::setRenderer(std::unique_ptr<IRenderer>&& renderer)
+{
+	curRenderer = std::move(renderer);
+}
+
+Window::~Window() {
+	// Destroy the window.
+	glfwDestroyWindow(m_glfwWindow);
+	// Terminate GLFW.
+	glfwTerminate();
 }
