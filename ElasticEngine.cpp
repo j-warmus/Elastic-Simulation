@@ -25,61 +25,45 @@ void ElasticEngine::advancePhysicsSim(const float timestep)
 		e2 = r2 - r4;
 		e3 = r3 - r4;
 
-		glm::mat3 T = glm::mat3(e1, e2, e3);
-		glm::mat3 deformationGradient = T * tetra.t0inv;
+		const glm::mat3 T = glm::mat3(e1, e2, e3);
+		const glm::mat3 deformationGradient = T * tetra.inverseInitialT;
 
-		glm::mat3 totalStrain = .5f * (glm::transpose(deformationGradient) * deformationGradient - glm::mat3(1.f));
-		glm::mat3 elasticStrain = totalStrain - tetra.plasticStrain;
+		// Right Cauchy-Green Tensor is Ft * F, totalStrain is Green-Lagrangian, note glm::mat3(1.f) is identity matrix
+		const glm::mat3 totalStrain = .5f * (glm::transpose(deformationGradient) * deformationGradient - glm::mat3(1.f));
+		const glm::mat3 elasticStrain = totalStrain - tetra.plasticStrain;
 	
+		const float elasticTrace = elasticStrain[0][0] + elasticStrain[1][1] + elasticStrain[2][2];
+
+		// The exact origin of these equations I can no longer find
+		// Essential idea is when stretched past a limit, the material will permanently deform
 		if (m_elasticParams.plasticDeformation) {
-			float elasticTrace = elasticStrain[0][0] + elasticStrain[1][1] + elasticStrain[2][2];
 			glm::mat3 dElasticStrain = elasticStrain - elasticTrace / 3.f * glm::mat3(1.f);
 
-			float magnitude_dElasticStrain = PhysicsUtil::calcFrobeniusNorm(dElasticStrain);
+			const float magnitude_dElasticStrain = PhysicsUtil::calcFrobeniusNorm(dElasticStrain);
 
 			glm::mat3 dPlasticStrain = glm::mat3(0.f);
 			if (magnitude_dElasticStrain > m_elasticParams.elasticLimit) {
 				dPlasticStrain = ((magnitude_dElasticStrain - m_elasticParams.elasticLimit) / magnitude_dElasticStrain) * dElasticStrain;
 				tetra.plasticStrain = (tetra.plasticStrain + dPlasticStrain) * fminf(1.f, m_elasticParams.plasticLimit / PhysicsUtil::calcFrobeniusNorm(tetra.plasticStrain + dPlasticStrain));
-
 			}
 		}
-		glm::mat3 strain = elasticStrain;
-		float lame1 = (m_elasticParams.youngs * m_elasticParams.poisson) / ((1.f + m_elasticParams.poisson) * (1.f - 2.f * m_elasticParams.poisson));
-		float lame2 = m_elasticParams.youngs / (2.f * (1.f + m_elasticParams.poisson));
-		float trace = strain[0][0] + strain[1][1] + strain[2][2];
 
+		// Lame constants for Saint Venant-Kirchoff Model
+		const float lame1 = (m_elasticParams.youngs * m_elasticParams.poisson) / 
+			((1.f + m_elasticParams.poisson) * (1.f - 2.f * m_elasticParams.poisson));
+		const float lame2 = m_elasticParams.youngs / (2.f * (1.f + m_elasticParams.poisson));
 
-		glm::mat3 cauchy;
-		// damping
-		if (m_elasticParams.enableDamping == true)
-		{
-			r1 = m_particleVec[p1].velocity;
-			r2 = m_particleVec[p2].velocity;
-			r3 = m_particleVec[p3].velocity;
-			r4 = m_particleVec[p4].velocity;
+		// 2nd Piola-Kirchoff tensor from Saint Venant-Kirchoff Model
+		const glm::mat3 cauchy = 2.f * lame2 * elasticStrain + lame1 * elasticTrace * glm::mat3(1.f);
 
-			e1 = r1 - r4;
-			e2 = r2 - r4;
-			e3 = r3 - r4;
-			glm::mat3 dF = glm::mat3(e1, e2, e3) * tetra.t0inv;
-			glm::mat3 dFt = glm::transpose(glm::mat3(e1, e2, e3)) * tetra.t0inv;
-			glm::mat3 v = .5f * (dFt * dF);
-			cauchy = 2.f * lame2 * strain + lame1 * trace * glm::mat3(1.f) + m_elasticParams.dampingFactor * v;
-
-		}
-		else {
-			cauchy = 2.f * lame2 * strain + lame1 * trace * glm::mat3(1.f);
-
-		}
-
+		// Elastic force = deformation gradient * potential energy (1st Piola-Kirchoff tensor)
 		m_particleVec[p1].force += deformationGradient * cauchy * tetra.n1;
 		m_particleVec[p2].force += deformationGradient * cauchy * tetra.n2;
 		m_particleVec[p3].force += deformationGradient * cauchy * tetra.n3;
 		m_particleVec[p4].force += deformationGradient * cauchy * tetra.n4;
 	}
 
-	// update particles
+	// Time integrate particles
 	for (auto& p : m_particleVec) {
 		p.velocity += (timestep / p.mass) * p.force;
 		p.velocity.y += timestep * m_elasticParams.gravity;
@@ -227,17 +211,16 @@ void ElasticEngine::cubeToTetras(const glm::ivec3 startParticleIndex)
 		tetra.volume = (1.f / 6.f) * glm::dot(glm::cross(e1, e2), e3);
 		assert(tetra.volume > 0.f && "Volume less than 0 for a PhysicsUtil::Tetra");
 
-		tetra.t0inv = glm::inverse(glm::mat3(e1, e2, e3));
+		tetra.inverseInitialT = glm::inverse(glm::mat3(e1, e2, e3));
 
 		tetra.n1 = .5f * glm::cross(r4 - r2, r3 - r2);
 		tetra.n2 = .5f * glm::cross(r3 - r1, r4 - r1);
 		tetra.n3 = .5f * glm::cross(r4 - r1, r2 - r1);
 		tetra.n4 = .5f * glm::cross(r2 - r1, r3 - r1);
 
-		// Initialize plastic strain
 		tetra.plasticStrain = glm::mat3(0.f);
 
-		// Initialize masses
+		// Initialize particle masses based on density and volume
 		for (int i = 0; i < 4; i++) {
 			m_particleVec[tetra.particleIdx[i]].mass += (m_elasticParams.density * tetra.volume) / 4.f;
 		}

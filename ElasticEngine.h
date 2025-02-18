@@ -12,12 +12,10 @@ struct elasticParams {
 	float poisson = 0.25;
 
 	float groundPlane = -3.0f;
-	float dampingFactor = 1.f;
 
 	float elasticLimit = 0.001f;
-	float plasticLimit = 0.2f;
 
-	bool enableDamping = true;
+	float plasticLimit = 0.2f;
 	bool plasticDeformation = true;
 };
 
