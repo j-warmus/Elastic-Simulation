@@ -10,7 +10,6 @@ public:
 	virtual void updateViewport(int width, int height) = 0;
 	
 	virtual void initBuffers(const std::vector<glm::vec3>& vertices, const std::vector<glm::ivec3>& indices) = 0;
-	virtual bool initializeShadersFromFile(const std::string& vertexShaderPath, const std::string& fragShaderPath) = 0;
 	virtual ~IRenderBackend() {};
 };
 

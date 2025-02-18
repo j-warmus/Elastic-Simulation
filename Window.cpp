@@ -16,7 +16,8 @@
 Window::Window(const int width, const int height, const std::string title)
 	: m_width(width), m_height(height), m_windowTitle(title)
 {
-	// Create GLFW window object.  Renderer has to be initialized after this due to GLEW and GLFW global state.
+	// Create GLFW window object.  Renderer has to be initialized after this since it initializes OpenGl context (sadly).
+	// If I implement DirectX backend this whole class will need a look.
 	if (!createWindow(m_width, m_height)) exit(EXIT_FAILURE);
 
 	// Setup callbacks.

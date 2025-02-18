@@ -1,62 +1,47 @@
 #include "ElasticEngine.h"
-#include "OpenGlBackend.h"
+#include "PhysicsEngine.h"
 #include "PhysicsRenderer.h"
+#include "RenderBackend.h"
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 #include <memory>
 
-PhysicsRenderer::PhysicsRenderer()
+PhysicsRenderer::PhysicsRenderer(std::unique_ptr<IPhysicsEngine>&& physicsEngine, std::unique_ptr<IRenderBackend>&& renderBackend)
+	: m_physicsEngine(std::move(physicsEngine)), m_renderBackend(std::move(renderBackend))
 {
+	// TODO remove these
 	m_model = glm::scale(glm::vec3(2.f));
 
 	m_color = glm::vec3(1.0f, 1.0f, 1.0f);
 
-	elasticParams p{};
-	physEngine = std::make_unique<ElasticEngine>(p);
+	m_vertices = m_physicsEngine->genVertices();
+	m_indices = m_physicsEngine->genIndices();
 
-	// TODO set these properly
-	physEngine->generateCubeGeometry(origin, width, height, depth, edgelength);
-
-	vertices = physEngine->genVertices();
-
-	indices = physEngine->genIndices();
-
-	// TODO this has to reflect the new values from the physics engine
-	renderBackend = std::make_unique<OpenGlBackend>();
-	renderBackend->initBuffers(vertices, indices);
-	// TODO unhardcode this
-	renderBackend->initializeShadersFromFile("shaders/shader.vert", "shaders/shader.frag");
-}
-
-
-
-PhysicsRenderer::~PhysicsRenderer()
-{
+	m_renderBackend->initBuffers(m_vertices, m_indices);
 }
 
 void PhysicsRenderer::draw(const glm::mat4& view, const glm::mat4& projection)
 {
-	// update vertex positions
-	update_buffer();
+	// Update vertex buffer from physics backend
+	updateBuffer();
 
-	renderBackend->draw(indices.size(), view, projection, m_model, m_color);
+	m_renderBackend->draw(m_indices.size(), view, projection, m_model, m_color);
 }
 
 void PhysicsRenderer::update(float timestep)
 {
-	physEngine->advancePhysicsSim(timestep);
+	m_physicsEngine->advancePhysicsSim(timestep);
 }
 
 void PhysicsRenderer::setViewDimensions(int width, int height)
 {
 	m_width = width;
 	m_height = height;
-	renderBackend->updateViewport(m_width, m_height);
+	m_renderBackend->updateViewport(m_width, m_height);
 }
 
-void PhysicsRenderer::update_buffer()
+void PhysicsRenderer::updateBuffer()
 {
-	vertices = physEngine->genVertices();
-
-	renderBackend->updateVertexBuffer(vertices);
+	m_vertices = m_physicsEngine->genVertices();
+	m_renderBackend->updateVertexBuffer(m_vertices);
 }

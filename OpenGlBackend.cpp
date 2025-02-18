@@ -13,6 +13,11 @@ OpenGlBackend::OpenGlBackend()
 	setOpenGlSettings();
 	printVersionInfo();
 }
+OpenGlBackend::~OpenGlBackend()
+{
+	// Delete the shader program.
+	glDeleteProgram(shaderProgram);
+}
 
 void OpenGlBackend::initBuffers(const std::vector<glm::vec3>& vertices, const std::vector<glm::ivec3>& indices)
 {
@@ -40,14 +45,6 @@ void OpenGlBackend::initBuffers(const std::vector<glm::vec3>& vertices, const st
 	glBindVertexArray(0);
 }
 
-OpenGlBackend::~OpenGlBackend()
-{
-	// Delete the shader program.
-	glDeleteProgram(shaderProgram);
-}
-
-
-
 void OpenGlBackend::draw(int elems_to_draw, const glm::mat4& view, const glm::mat4& projection, const glm::mat4& model, const glm::vec3& color)
 {
 	// Clear the color and depth buffers
@@ -65,12 +62,12 @@ void OpenGlBackend::draw(int elems_to_draw, const glm::mat4& view, const glm::ma
 	// Bind the VAO
 	glBindVertexArray(VAO);
 
-	// set drawing mode
+	// Set drawing mode
 	if (m_drawmode == 0) { glPolygonMode(GL_FRONT_AND_BACK, GL_POINT); }
 	else if (m_drawmode == 1) { glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); }
 	else { glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); }
 
-	// TODO magic
+	// Draw
 	glDrawElements(GL_TRIANGLES, 3 * elems_to_draw, GL_UNSIGNED_INT, 0);
 
 	// Unbind the VAO and shader program

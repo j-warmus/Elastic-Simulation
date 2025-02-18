@@ -4,7 +4,7 @@
 #include <glm/glm.hpp>
 #include <vector>
 
-
+// Both these structs have default values that produce a good result to start
 struct elasticParams {
 	float density = 1000;
 	float gravity = -9.8f;
@@ -21,11 +21,21 @@ struct elasticParams {
 	bool plasticDeformation = true;
 };
 
+struct cubeParams {
+	glm::vec3 origin = glm::vec3(-3, 5, -8);
+
+	unsigned int height = 5;
+	unsigned int width = 5;
+	unsigned int depth = 5;
+	float edgelength = 1;
+};
+
 class ElasticEngine : public IPhysicsEngine
 {
 public:
-	ElasticEngine(elasticParams params);
-	~ElasticEngine();
+	ElasticEngine() {};
+	ElasticEngine(elasticParams params, cubeParams cubeParameters);
+	~ElasticEngine() {};
 
 	void advancePhysicsSim(float timestep);
 
@@ -36,15 +46,15 @@ public:
 	// Fills particle and tetra vecs, must be called before calling advancePhysicsSim
 	// The whole sequence is kind of arcane but I want to implement a more general model loading solution so I'll leave as is
 	// Generates a w x h x d cube centered on startpos. Each particle is edgelength apart.
-	void generateCubeGeometry(glm::vec3 startpos,
-		unsigned int width, unsigned int height, unsigned int depth, float edgelength);
+	void generateCubeGeometry();
 
 private:
-	std::vector<PhysicsUtil::Particle> particleVec;
-	std::vector<PhysicsUtil::Tetra> tetraVec;
-	elasticParams parameters;
+	std::vector<PhysicsUtil::Particle> m_particleVec;
+	std::vector<PhysicsUtil::Tetra> m_tetraVec;
+	elasticParams m_elasticParams;
+	cubeParams m_cubeParams;
 
 	// helper function for generateCubeGeometry, generates 5 tetras from each 8-particle cube, starting with particle at given index
-	void cubeToTetras(glm::ivec3 startParticleIndex, unsigned int width, unsigned int height, unsigned int depth);
+	void cubeToTetras(glm::ivec3 startParticleIndex);
 };
 

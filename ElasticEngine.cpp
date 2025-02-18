@@ -6,7 +6,7 @@
 
 void ElasticEngine::advancePhysicsSim(float timestep)
 {
-	for (auto& tetra : tetraVec) {
+	for (auto& tetra : m_tetraVec) {
 		int p1, p2, p3, p4;
 		glm::vec3 r1, r2, r3, r4;
 		glm::vec3 e1, e2, e3;
@@ -16,10 +16,10 @@ void ElasticEngine::advancePhysicsSim(float timestep)
 		p3 = tetra.particleIdx[2];
 		p4 = tetra.particleIdx[3];
 
-		r1 = particleVec[p1].position;
-		r2 = particleVec[p2].position;
-		r3 = particleVec[p3].position;
-		r4 = particleVec[p4].position;
+		r1 = m_particleVec[p1].position;
+		r2 = m_particleVec[p2].position;
+		r3 = m_particleVec[p3].position;
+		r4 = m_particleVec[p4].position;
 
 		e1 = r1 - r4;
 		e2 = r2 - r4;
@@ -31,33 +31,33 @@ void ElasticEngine::advancePhysicsSim(float timestep)
 		glm::mat3 total_strain = .5f * (glm::transpose(F) * F - glm::mat3(1.f));
 		glm::mat3 elastic_strain = total_strain - tetra.plasticStrain;
 	
-		if (parameters.plasticDeformation) {
+		if (m_elasticParams.plasticDeformation) {
 			float e_trace = elastic_strain[0][0] + elastic_strain[1][1] + elastic_strain[2][2];
 			glm::mat3 d_elastic_strain = elastic_strain - e_trace / 3.f * glm::mat3(1.f);
 
 			float mag_de_strain = PhysicsUtil::calcFrobeniusNorm(d_elastic_strain);
 
 			glm::mat3 d_plastic = glm::mat3(0.f);
-			if (mag_de_strain > parameters.elastic_limit) {
-				d_plastic = ((mag_de_strain - parameters.elastic_limit) / mag_de_strain) * d_elastic_strain;
-				tetra.plasticStrain = (tetra.plasticStrain + d_plastic) * fminf(1.f, parameters.plastic_limit / PhysicsUtil::calcFrobeniusNorm(tetra.plasticStrain + d_plastic));
+			if (mag_de_strain > m_elasticParams.elastic_limit) {
+				d_plastic = ((mag_de_strain - m_elasticParams.elastic_limit) / mag_de_strain) * d_elastic_strain;
+				tetra.plasticStrain = (tetra.plasticStrain + d_plastic) * fminf(1.f, m_elasticParams.plastic_limit / PhysicsUtil::calcFrobeniusNorm(tetra.plasticStrain + d_plastic));
 
 			}
 		}
 		glm::mat3 strain = elastic_strain;
-		float lame1 = (parameters.youngs * parameters.poisson) / ((1.f + parameters.poisson) * (1.f - 2.f * parameters.poisson));
-		float lame2 = parameters.youngs / (2.f * (1.f + parameters.poisson));
+		float lame1 = (m_elasticParams.youngs * m_elasticParams.poisson) / ((1.f + m_elasticParams.poisson) * (1.f - 2.f * m_elasticParams.poisson));
+		float lame2 = m_elasticParams.youngs / (2.f * (1.f + m_elasticParams.poisson));
 		float trace = strain[0][0] + strain[1][1] + strain[2][2];
 
 
 		glm::mat3 cauchy;
 		// damping
-		if (parameters.enableDamping == true)
+		if (m_elasticParams.enableDamping == true)
 		{
-			r1 = particleVec[p1].velocity;
-			r2 = particleVec[p2].velocity;
-			r3 = particleVec[p3].velocity;
-			r4 = particleVec[p4].velocity;
+			r1 = m_particleVec[p1].velocity;
+			r2 = m_particleVec[p2].velocity;
+			r3 = m_particleVec[p3].velocity;
+			r4 = m_particleVec[p4].velocity;
 
 			e1 = r1 - r4;
 			e2 = r2 - r4;
@@ -65,7 +65,7 @@ void ElasticEngine::advancePhysicsSim(float timestep)
 			glm::mat3 dF = glm::mat3(e1, e2, e3) * tetra.t0inv;
 			glm::mat3 dFt = glm::transpose(glm::mat3(e1, e2, e3)) * tetra.t0inv;
 			glm::mat3 v = .5f * (dFt * dF);
-			cauchy = 2.f * lame2 * strain + lame1 * trace * glm::mat3(1.f) + parameters.dampingFactor * v;
+			cauchy = 2.f * lame2 * strain + lame1 * trace * glm::mat3(1.f) + m_elasticParams.dampingFactor * v;
 
 		}
 		else {
@@ -73,21 +73,21 @@ void ElasticEngine::advancePhysicsSim(float timestep)
 
 		}
 
-		particleVec[p1].force += F * cauchy * tetra.n1;
-		particleVec[p2].force += F * cauchy * tetra.n2;
-		particleVec[p3].force += F * cauchy * tetra.n3;
-		particleVec[p4].force += F * cauchy * tetra.n4;
+		m_particleVec[p1].force += F * cauchy * tetra.n1;
+		m_particleVec[p2].force += F * cauchy * tetra.n2;
+		m_particleVec[p3].force += F * cauchy * tetra.n3;
+		m_particleVec[p4].force += F * cauchy * tetra.n4;
 	}
 
 	// update particles
-	for (auto& p : particleVec) {
+	for (auto& p : m_particleVec) {
 		p.velocity += (timestep / p.mass) * p.force;
-		p.velocity.y += timestep * parameters.gravity;
+		p.velocity.y += timestep * m_elasticParams.gravity;
 		p.position += timestep * p.velocity;
 		p.force = glm::vec3(0.f, 0.f, 0.f);
 
-		if (p.position.y < parameters.groundPlane) {
-			p.position.y = parameters.groundPlane;
+		if (p.position.y < m_elasticParams.groundPlane) {
+			p.position.y = m_elasticParams.groundPlane;
 			p.velocity = glm::vec3(0.f, 0.f, 0.f);
 		}
 
@@ -100,8 +100,8 @@ std::vector<glm::vec3> ElasticEngine::genVertices() const
 	// This potentially gets called every frame. More robust solution would possibly have each 
 	// particle index into a vertex vec with each of the positions and just return that as reference
 	std::vector<glm::vec3> outVec;
-	outVec.reserve(particleVec.size());
-	for (auto& particle : particleVec) {
+	outVec.reserve(m_particleVec.size());
+	for (auto& particle : m_particleVec) {
 		outVec.push_back(particle.position);
 	}
 
@@ -111,11 +111,11 @@ std::vector<glm::vec3> ElasticEngine::genVertices() const
 std::vector<glm::ivec3> ElasticEngine::genIndices() const
 {
 	std::vector<glm::ivec3> outVec;
-	outVec.reserve(tetraVec.size() * 4);
+	outVec.reserve(m_tetraVec.size() * 4);
 
 	// Note: this repeats faces.  Whole system is due for rewrite so will leave as is,
 	// but has potential performance cost on more complex models
-	for (auto& tetra : tetraVec) {
+	for (auto& tetra : m_tetraVec) {
 		outVec.push_back(glm::ivec3(tetra.particleIdx[0], tetra.particleIdx[1], tetra.particleIdx[2]));
 		outVec.push_back(glm::ivec3(tetra.particleIdx[0], tetra.particleIdx[1], tetra.particleIdx[3]));
 		outVec.push_back(glm::ivec3(tetra.particleIdx[0], tetra.particleIdx[2], tetra.particleIdx[3]));
@@ -125,21 +125,16 @@ std::vector<glm::ivec3> ElasticEngine::genIndices() const
 	return outVec;
 }
 
-ElasticEngine::ElasticEngine(elasticParams params)
-	: parameters(params)
-{
-}
+ElasticEngine::ElasticEngine(elasticParams elasticParameters, cubeParams cubeParameters)
+	: m_elasticParams(elasticParameters), m_cubeParams(cubeParameters) {}
 
-ElasticEngine::~ElasticEngine()
-{
-}
-
-void ElasticEngine::generateCubeGeometry(glm::vec3 startpos, unsigned int width, unsigned int height, unsigned int depth, float edgelength)
+void ElasticEngine::generateCubeGeometry()
 {
 	// Generates particles in particleVec.  They are in a cube arrangement.
 	// The location of each particle in particleVec is a flattened 3d representation, [x][y][z]
+	auto& [origin, height, width, depth, edgelength] = m_cubeParams;
 
-	particleVec.resize(width * height * depth);
+	m_particleVec.resize(width * height * depth);
 
 	for (int z = 0; z < depth; z++)
 	{
@@ -149,8 +144,8 @@ void ElasticEngine::generateCubeGeometry(glm::vec3 startpos, unsigned int width,
 			{
 				// TODO can be done with emplace_back
 				PhysicsUtil::Particle p;
-				p.position = startpos + glm::vec3(x * edgelength, y * edgelength, z * edgelength);
-				particleVec[x + y * width + z * width * depth] = p;
+				p.position = origin + glm::vec3(x * edgelength, y * edgelength, z * edgelength);
+				m_particleVec[x + y * width + z * width * depth] = p;
 			}
 		}
 	}
@@ -162,14 +157,15 @@ void ElasticEngine::generateCubeGeometry(glm::vec3 startpos, unsigned int width,
 		{
 			for (int k = 1; k < depth; ++k)
 			{
-				cubeToTetras(glm::ivec3(i, j, k), width, height, depth);
+				cubeToTetras(glm::ivec3(i, j, k));
 			}
 		}
 	}
 }
 
-void ElasticEngine::cubeToTetras(glm::ivec3 startParticleIndex, unsigned int width, unsigned int height, unsigned int depth)
+void ElasticEngine::cubeToTetras(glm::ivec3 startParticleIndex)
 {
+	auto& [_, height, width, depth, __] = m_cubeParams;
 /*
  * Cube indices used below, 0 being the location of startParticleIndex
  *    4----7
@@ -187,7 +183,7 @@ void ElasticEngine::cubeToTetras(glm::ivec3 startParticleIndex, unsigned int wid
 		return idx[0] + idx[1] * width + idx[2] * width * depth;
 		};
 
- // Gets all 8 particles indices of a cube
+	// Gets all 8 particles indices of a cube
 	int p0 = idx3d(glm::ivec3(0,0,0));
 	int p1 = idx3d(glm::ivec3(0, -1, 0));
 	int p2 = idx3d(glm::ivec3(1, -1, 0));
@@ -213,10 +209,10 @@ void ElasticEngine::cubeToTetras(glm::ivec3 startParticleIndex, unsigned int wid
 		PhysicsUtil::Tetra tetra{};
 		tetra.particleIdx = tetrasToConstruct[i];
 
-		auto& p1 = particleVec.at(tetra.particleIdx[0]);
-		auto& p2 = particleVec.at(tetra.particleIdx[1]);
-		auto& p3 = particleVec.at(tetra.particleIdx[2]);
-		auto& p4 = particleVec.at(tetra.particleIdx[3]);
+		auto& p1 = m_particleVec.at(tetra.particleIdx[0]);
+		auto& p2 = m_particleVec.at(tetra.particleIdx[1]);
+		auto& p3 = m_particleVec.at(tetra.particleIdx[2]);
+		auto& p4 = m_particleVec.at(tetra.particleIdx[3]);
 
 		// calculate initial values
 		glm::vec3 r1 = p1.position;
@@ -243,10 +239,10 @@ void ElasticEngine::cubeToTetras(glm::ivec3 startParticleIndex, unsigned int wid
 
 		// Initialize masses
 		for (int i = 0; i < 4; i++) {
-			particleVec[tetra.particleIdx[i]].mass += (parameters.density * tetra.volume) / 4.f;
+			m_particleVec[tetra.particleIdx[i]].mass += (m_elasticParams.density * tetra.volume) / 4.f;
 		}
 
-		tetraVec.push_back(tetra);
+		m_tetraVec.push_back(tetra);
 	}
 
 }
